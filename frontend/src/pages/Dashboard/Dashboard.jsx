@@ -1006,14 +1006,46 @@ const ProfileView = ({ userDetails, setUserDetails, userGoalData, setUserGoalDat
     }
   };
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfileData(prev => ({ ...prev, avatar: reader.result }));
-    };
-    reader.readAsDataURL(file);
+
+    if (IS_PREVIEW_MODE) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileData(prev => ({ ...prev, avatar: reader.result }));
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    setLoading(true);
+    setAlert({ show: false, text: "", type: "success" });
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const response = await fetch(buildApiUrl("/api/users/upload-avatar"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setProfileData(prev => ({ ...prev, avatar: data.avatarUrl }));
+        setUserDetails(prev => ({ ...prev, avatar: data.avatarUrl }));
+        setAlert({ show: true, text: "Profile picture uploaded successfully!", type: "success" });
+      } else {
+        setAlert({ show: true, text: data.msg || "Failed to upload avatar", type: "error" });
+      }
+    } catch (err) {
+      setAlert({ show: true, text: "Error connecting to upload server", type: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

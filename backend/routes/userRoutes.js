@@ -1,11 +1,27 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 const {
   authMiddleware,
   superAdminMiddleware,
   moderatorViewMiddleware,
 } = require("../middleware/authMiddleware");
 const supabase = require("../config/supabaseClient");
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Multer memory storage
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 } // limit to 2MB
+});
 
 const router = express.Router();
 
@@ -116,6 +132,54 @@ router.delete(
     } catch (err) {
       console.error('Error deleting user:', err);
       res.status(500).json({ msg: "Server Error deleting user", error: err.message });
+    }
+  }
+);
+
+// POST /api/users/upload-avatar - Upload profile avatar to Cloudinary
+router.post(
+  "/upload-avatar",
+  [authMiddleware, upload.single("avatar")],
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ msg: "No file uploaded" });
+    }
+
+    try {
+      // Upload image stream to Cloudinary
+      const uploadStream = () => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "nayepankh_avatars",
+              public_id: `avatar_${req.user.id}`,
+              overwrite: true,
+              resource_type: "image"
+            },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+      };
+
+      const result = await uploadStream();
+      const avatarUrl = result.secure_url;
+
+      // Update avatar URL in Supabase database
+      const { error: dbError } = await supabase
+        .from("users")
+        .update({ avatar: avatarUrl })
+        .eq("id", req.user.id);
+
+      if (dbError) throw dbError;
+
+      res.status(200).json({ avatarUrl, msg: "Avatar uploaded successfully" });
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      res.status(500).json({ msg: "Server Error uploading avatar", error: err.message });
     }
   }
 );

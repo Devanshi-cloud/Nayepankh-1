@@ -23,7 +23,6 @@ import Footer from "./Footer";
 import logoImg1 from "../assets/loop-img-1.jpg";
 import logoImg2 from "../assets/loop-img-2.jpg";
 import logoImg3 from "../assets/loop-img-3.jpg";
-import backgroundVideo from "../assets/MashUp_Video.mp4";
 import { keyframes } from "@mui/system";
 import Navbar from "./Navbar";
 const theme = createTheme({
@@ -67,7 +66,7 @@ export default function Home() {
   useEffect(() => {
     // Defer loading of 16.7MB background video to prioritize landing page layout/assets
     const timer = setTimeout(() => {
-      setVideoSrc(backgroundVideo);
+      setVideoSrc("https://res.cloudinary.com/djjdhzda8/video/upload/q_auto,f_auto/v1783538902/nayepankh_mashup_video.mp4");
     }, 400);
     return () => clearTimeout(timer);
   }, []);

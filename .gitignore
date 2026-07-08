@@ -34,8 +34,8 @@ dist-ssr/
 build/
 .next/
 out/
-/frontend - landing page/dist/
-/frontend - landing page/build/
+/frontend/dist/
+/frontend/build/
 
 # Package Manager Locks & Cache (Optional, uncomment if you prefer to ignore locks)
 # yarn.lock

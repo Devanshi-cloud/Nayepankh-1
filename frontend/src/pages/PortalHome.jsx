@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, Container, Button } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import mainLogo from "../assets/NayePankh-logo.png"; // Logo from main site
-import sampleVideo from "../assets/sample-video.mp4"; // Your background video
 import LoadingScreen from "../components/LoadingScreen";
 
 // Theme matching NayePankh Foundation
@@ -39,7 +38,7 @@ function InternsHome() {
     if (!loading) {
       // Defer loading 16.7MB sample video until after loading screen completes
       const timer = setTimeout(() => {
-        setVideoSrc(sampleVideo);
+        setVideoSrc("https://res.cloudinary.com/djjdhzda8/video/upload/q_auto,f_auto/v1783538902/nayepankh_mashup_video.mp4");
       }, 300);
       return () => clearTimeout(timer);
     }
