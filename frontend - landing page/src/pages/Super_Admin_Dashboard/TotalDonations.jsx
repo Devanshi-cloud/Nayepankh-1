@@ -21,13 +21,12 @@ import {
   MenuItem,
   Select,
   FormControl,
+  Button,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import theme from "../../theme";
+import theme from "../../portalTheme";
 import SearchIcon from "@mui/icons-material/Search";
-import DonationsIcon from "@mui/icons-material/MonetizationOn";
-
-const TotalDonationsView = () => {
+const TotalDonations = () => {
   const [allDonations, setAllDonations] = useState([]);
   const [referralTotal, setReferralTotal] = useState(0);
   const [nonReferralTotal, setNonReferralTotal] = useState(0);
@@ -57,6 +56,7 @@ const TotalDonationsView = () => {
         if (response.ok) {
           const donations = data.donations || [];
           setAllDonations(donations);
+
           // Calculate totals
           const referralSum = donations
             .filter((d) => d.referralCode)
@@ -66,18 +66,21 @@ const TotalDonationsView = () => {
             .reduce((sum, d) => sum + d.amount, 0);
           setReferralTotal(referralSum);
           setNonReferralTotal(nonReferralSum);
+        } else {
+          console.error("Failed to fetch donations:", data.msg);
         }
       } catch (error) {
-        // Optionally handle error
+        console.error("Error fetching donations:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchDonations();
   }, [token]);
 
   useEffect(() => {
-    setVisibleCount(10);
+    setVisibleCount(10); // Reset pagination when filters or data change
   }, [filters, allDonations]);
 
   const filteredDonations = allDonations.filter((donation) => {
@@ -94,14 +97,18 @@ const TotalDonationsView = () => {
     <ThemeProvider theme={theme}>
       <Box sx={{ p: { xs: 2, sm: 4 }, bgcolor: "background.default", minHeight: "100vh" }}>
         <Container maxWidth="lg">
-          <Box sx={{ display: "flex", alignItems: "center", mb: 3, gap: 2 }}>
-            <Card sx={{ bgcolor: "primary.main", color: "white", borderRadius: 3, boxShadow: 2, px: 3, py: 2, display: 'flex', alignItems: 'center' }}>
-              <DonationsIcon sx={{ fontSize: 32, mr: 2 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                Total Donations Overview
-              </Typography>
-            </Card>
-          </Box>
+          <Typography
+            variant="h4"
+            sx={{
+              mb: { xs: 2, sm: 4 },
+              textAlign: "center",
+              color: "primary.main",
+              fontWeight: 700,
+              fontSize: { xs: "1.5rem", sm: "2.5rem" },
+            }}
+          >
+            Total Donations Overview
+          </Typography>
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress color="primary" size={48} />
@@ -134,6 +141,8 @@ const TotalDonationsView = () => {
                   </Card>
                 </Grid>
               </Grid>
+
+              {/* Merged Donations Table */}
               <Typography variant="h5" sx={{ mb: 2, color: "primary.main", fontWeight: 600 }}>
                 All Donations
               </Typography>
@@ -191,9 +200,11 @@ const TotalDonationsView = () => {
                                 value={filters.type}
                                 onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}
                                 displayEmpty
-                                inputProps={{ 'aria-label': 'Type' }}
+                                disableUnderline
+                                sx={{ bgcolor: 'background.paper', borderRadius: 2, fontSize: '0.95rem', px: 1 }}
+                                renderValue={selected => selected === '' ? 'Type' : selected}
                               >
-                                <MenuItem value="">All</MenuItem>
+                                <MenuItem value="">All Types</MenuItem>
                                 <MenuItem value="Referral">Referral</MenuItem>
                                 <MenuItem value="Non-Referral">Non-Referral</MenuItem>
                               </Select>
@@ -214,7 +225,7 @@ const TotalDonationsView = () => {
                               variant="standard"
                               value={filters.date}
                               onChange={e => setFilters(f => ({ ...f, date: e.target.value }))}
-                              placeholder="Date"
+                              placeholder="Date (MM/DD/YYYY)"
                               InputProps={{ disableUnderline: true, sx: { fontSize: '0.95rem' } }}
                               sx={{ bgcolor: 'background.paper', borderRadius: 2, width: '100%', px: 1, my: 0.5, boxShadow: 0, fontSize: '0.95rem' }}
                             />
@@ -222,21 +233,83 @@ const TotalDonationsView = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {filteredDonations.slice(0, visibleCount).map((donation, idx) => (
-                          <TableRow key={donation._id || idx}>
-                            <TableCell>{donation.donorName}</TableCell>
-                            <TableCell>{donation.campaign?.title}</TableCell>
-                            <TableCell>{donation.campaign?.description}</TableCell>
-                            <TableCell>₹{donation.campaign?.goalAmount?.toLocaleString()}</TableCell>
-                            <TableCell>₹{donation.amount?.toLocaleString()}</TableCell>
-                            <TableCell>{donation.referralCode ? "Referral" : "Non-Referral"}</TableCell>
-                            <TableCell>{donation.referralCode}</TableCell>
-                            <TableCell>{donation.date ? new Date(donation.date).toLocaleDateString() : "-"}</TableCell>
+                        {filteredDonations.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
+                              No donations found.
+                            </TableCell>
                           </TableRow>
-                        ))}
+                        ) : (
+                          filteredDonations.slice(0, visibleCount).map((donation) => {
+                            // Use campaignDetails if campaign is missing or is a custom/card-based donation
+                            const campaignInfo = donation.campaign && donation.campaign.title !== 'Custom Donation'
+                              ? donation.campaign
+                              : donation.campaignDetails || { title: 'Custom Donation', description: 'A custom donation without a specific campaign', goalAmount: null };
+                            return (
+                              <TableRow
+                                key={donation._id}
+                                sx={{ "&:hover": { bgcolor: "rgba(33,110,182,0.05)" }, transition: "background-color 0.3s" }}
+                              >
+                                <TableCell>{donation.donorName || "Anonymous"}</TableCell>
+                                <TableCell>{campaignInfo.title}</TableCell>
+                                <TableCell>{campaignInfo.description}</TableCell>
+                                <TableCell>{campaignInfo.goalAmount ? `₹${campaignInfo.goalAmount.toLocaleString()}` : "N/A"}</TableCell>
+                                <TableCell>₹{donation.amount.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={donation.referralCode ? "Referral" : "Non-Referral"}
+                                    size="small"
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: "0.8rem",
+                                      color: "white",
+                                      bgcolor: donation.referralCode
+                                        ? "linear-gradient(45deg, #42A5F5 30%, #2196F3 90%)"
+                                        : "linear-gradient(45deg, #FF7043 30%, #F4511E 90%)",
+                                      background: donation.referralCode
+                                        ? "linear-gradient(45deg, #42A5F5 30%, #2196F3 90%)"
+                                        : "linear-gradient(45deg, #FF7043 30%, #F4511E 90%)",
+                                      boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                                      borderRadius: "16px",
+                                      padding: "0 8px",
+                                      "&:hover": {
+                                        transform: "scale(1.05)",
+                                        boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
+                                      },
+                                      transition: "all 0.2s ease-in-out",
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell>{donation.referralCode || "N/A"}</TableCell>
+                                <TableCell>{new Date(donation.date).toLocaleDateString()}</TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  {filteredDonations.length > 0 && visibleCount < filteredDonations.length && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => setVisibleCount(c => c + 10)}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          fontWeight: 600,
+                          borderRadius: 2,
+                          px: 4,
+                          py: 1.2,
+                          fontSize: '1rem',
+                          boxShadow: 2,
+                          '&:hover': { bgcolor: '#1E5FA4' },
+                        }}
+                      >
+                        Show More
+                      </Button>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </>
@@ -247,4 +320,4 @@ const TotalDonationsView = () => {
   );
 };
 
-export default TotalDonationsView; 
+export default TotalDonations;

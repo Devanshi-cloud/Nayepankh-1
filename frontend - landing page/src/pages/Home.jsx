@@ -62,6 +62,15 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [carouselIndexLoop, setCarouselIndexLoop] = useState(0);
   const navigate = useNavigate();
+  const [videoSrc, setVideoSrc] = useState("");
+
+  useEffect(() => {
+    // Defer loading of 16.7MB background video to prioritize landing page layout/assets
+    const timer = setTimeout(() => {
+      setVideoSrc(backgroundVideo);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Typewriting animation for "Join our Team"
   const teamText = "Join our Team";
@@ -143,23 +152,37 @@ export default function Home() {
         }}
       >
         {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            objectFit: "cover",
-            zIndex: 0,
-          }}
-        >
-          <source src={backgroundVideo} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {videoSrc ? (
+          <video
+            autoPlay
+            loop
+            muted
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              objectFit: "cover",
+              zIndex: 0,
+            }}
+          >
+            <source src={videoSrc} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              bgcolor: "#34495E", // Matching fallback Slate color
+              zIndex: 0,
+            }}
+          />
+        )}
 
         {/* Hero Section */}
         <Box

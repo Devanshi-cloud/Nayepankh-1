@@ -18,7 +18,7 @@ import {
   Chip,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import theme from "../../theme";
+import theme from "../../portalTheme";
 import PeopleIcon from "@mui/icons-material/People";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";

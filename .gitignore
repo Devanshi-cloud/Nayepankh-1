@@ -1,47 +1,92 @@
-# Dependency directories
+# ==============================================================================
+# NayePankh Intern Portal - Production-Ready Git Ignore File
+# Monorepo configuration covering Node, Express, Vite, and React
+# ==============================================================================
+
+# Dependencies
 node_modules/
+/node_modules
+**/node_modules/
 
-# Build and distribution directories
-dist/
-dist-ssr/
-build/
-.next/
-out/
-.cache/
-.parcel-cache/
-
-# Environment files and credentials
+# Environment Variables & Private Credentials
 .env
 .env.local
 .env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.example.local
+**/.env
+**/.env.*
+!**/.env.example
 
-# Logs
-logs
+# Service Keys & Credentials
+*.pem
+*.key
+*.pub
+*.cert
+*.pfx
+*.p12
+
+# Production Builds
+dist/
+dist-ssr/
+build/
+.next/
+out/
+/frontend - landing page/dist/
+/frontend - landing page/build/
+
+# Package Manager Locks & Cache (Optional, uncomment if you prefer to ignore locks)
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml
+.npm/
+.yarn-cache/
+.pnpm-store/
+
+# Debugging and Server Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+nodemon.json
 
-# Editor and System files
-.vscode/*
+# Test Scripts, Artifacts, and Coverage
+coverage/
+.nyc_output/
+check_db.js
+test_email.js
+seed.js
+
+# IDEs / Editors Settings
+.vscode/
 !.vscode/extensions.json
 .idea/
-.DS_Store
-Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*~
+.project
+.classpath
+.settings/
 
-# Testing and coverage
-coverage/
-.nyc_output/
+# System / OS-Specific Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon\r
 
-# Temporary / OS-specific
-*.tgz
+# Diagnostic & Cache Directories
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.turbo/
+.vercel/

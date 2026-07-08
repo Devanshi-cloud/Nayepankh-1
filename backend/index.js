@@ -9,7 +9,8 @@ const app = express();
 const allowedOrigins = [
   'https://naye-pankh-intern-portal.vercel.app',  // Main frontend
   'https://naye-pankh-intern-portal-ox93.vercel.app',  // Preview/backend
-  'http://localhost:3000'  // Local dev (adjust port if needed)
+  'http://localhost:3000',  // Local dev
+  'http://localhost:5173'   // Integrated local dev (Vite)
 ];
 
 // Global CORS pre-handler (runs before any middleware, handles all methods/paths)

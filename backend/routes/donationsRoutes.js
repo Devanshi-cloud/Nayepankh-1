@@ -100,7 +100,7 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 // GET /api/donations/leaderboard - Fetch leaderboard data
-router.get("/leaderboard", authMiddleware, async (req, res) => {
+router.get("/leaderboard", async (req, res) => {
   try {
     const { data: leaderboard, error } = await supabase
       .from("fundraisers")

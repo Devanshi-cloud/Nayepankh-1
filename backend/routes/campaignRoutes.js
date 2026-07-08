@@ -57,8 +57,8 @@ router.post("/", [authMiddleware, superAdminMiddleware], async (req, res) => {
   }
 });
 
-// GET /api/campaign - Fetch all campaigns (for Super Admin)
-router.get("/", authMiddleware, async (req, res) => {
+// GET /api/campaign - Fetch all campaigns
+router.get("/", async (req, res) => {
   try {
     const { data: campaigns, error } = await supabase
       .from("campaigns")

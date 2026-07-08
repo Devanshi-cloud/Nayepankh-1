@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Container, Button } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import mainLogo from "../assets/NayePankh-logo.png"; // Logo from main site
 import sampleVideo from "../assets/sample-video.mp4"; // Your background video
+import LoadingScreen from "../components/LoadingScreen";
 
 // Theme matching NayePankh Foundation
 const theme = createTheme({
@@ -31,10 +32,26 @@ const theme = createTheme({
 
 function InternsHome() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [videoSrc, setVideoSrc] = useState("");
+
+  useEffect(() => {
+    if (!loading) {
+      // Defer loading 16.7MB sample video until after loading screen completes
+      const timer = setTimeout(() => {
+        setVideoSrc(sampleVideo);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   const handleLoginClick = () => {
     navigate("/login"); // Redirect to /login
   };
+
+  if (loading) {
+    return <LoadingScreen onComplete={() => setLoading(false)} />;
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -49,24 +66,38 @@ function InternsHome() {
         }}
       >
         {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            zIndex: 0,
-          }}
-        >
-          <source src={sampleVideo} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {videoSrc ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              zIndex: 0,
+            }}
+          >
+            <source src={videoSrc} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              bgcolor: "#34495E", // Fallback color
+              zIndex: 0,
+            }}
+          />
+        )}
 
         {/* Hero Section */}
         <Box

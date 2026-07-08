@@ -17,7 +17,7 @@ import {
   TextField,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import theme from "../../theme";
+import theme from "../../portalTheme";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DeleteIcon from "@mui/icons-material/Delete";

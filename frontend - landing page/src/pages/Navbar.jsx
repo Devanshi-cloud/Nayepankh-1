@@ -47,6 +47,7 @@ export default function Navbar() {
     { text: "Certificates", path: "/certificates" },
     { text: "Newspaper", path: "/newspaper" },
     { text: "Donate", path: "/donate" },
+    { text: "Portal Login", path: "/login" },
   ];
 
   return (
