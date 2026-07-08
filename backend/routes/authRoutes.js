@@ -84,7 +84,7 @@ function generateOTP() {
 
 // Registration (Interns: OTP, Others: as is)
 router.post("/signup", async (req, res) => {
-  const { firstname, lastname, email, password, internshipPeriod, role } = req.body;
+  let { firstname, lastname, email, password, internshipPeriod, role } = req.body;
 
   // Validate required fields
   const missing = [];
@@ -96,6 +96,8 @@ router.post("/signup", async (req, res) => {
   if (missing.length) {
     return res.status(400).json({ msg: "Missing required fields", missing });
   }
+
+  email = email.toLowerCase();
 
   try {
     // Check if user exists
@@ -193,7 +195,8 @@ router.post("/signup", async (req, res) => {
 
 // OTP Verification for Registration
 router.post('/verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
+  const { email: rawEmail, otp } = req.body;
+  const email = rawEmail.toLowerCase();
   try {
     const { data: user, error } = await supabase
       .from("users")
@@ -289,7 +292,8 @@ router.post("/login", async (req, res) => {
 
 // OTP Verification for Login
 router.post('/login-verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
+  const { email: rawEmail, otp } = req.body;
+  const email = rawEmail.toLowerCase();
   try {
     const { data: user, error } = await supabase
       .from("users")
