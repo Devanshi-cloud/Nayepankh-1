@@ -14,7 +14,7 @@ const testimonials = [
     quote:
       "NayePankh Foundation gave me the opportunity to continue my education when my family couldn't afford it. Today, I'm pursuing my dream of becoming a teacher, thanks to their support.",
     avatar: "",
-    color: "#2ECC71",
+    color: "#216eb6",
   },
   {
     name: "Rahul Verma",
@@ -109,7 +109,7 @@ export default function ImpactStories() {
           width: "600px",
           height: "600px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(46,204,113,0.03) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(33,110,182,0.03) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -316,11 +316,11 @@ export default function ImpactStories() {
                 width: index === currentIndex ? 28 : 10,
                 height: 10,
                 borderRadius: 5,
-                bgcolor: index === currentIndex ? "#2ECC71" : "rgba(0,0,0,0.15)",
+                bgcolor: index === currentIndex ? "#216eb6" : "rgba(0,0,0,0.15)",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 "&:hover": {
-                  bgcolor: index === currentIndex ? "#2ECC71" : "rgba(0,0,0,0.3)",
+                  bgcolor: index === currentIndex ? "#216eb6" : "rgba(0,0,0,0.3)",
                 },
               }}
               role="button"

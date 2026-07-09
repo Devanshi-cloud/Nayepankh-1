@@ -90,7 +90,7 @@ export default function HeroSection() {
         sx={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(135deg, rgba(44,62,80,0.85) 0%, rgba(46,204,113,0.3) 50%, rgba(44,62,80,0.7) 100%)",
+          background: "linear-gradient(135deg, rgba(44,62,80,0.85) 0%, rgba(33,110,182,0.3) 50%, rgba(44,62,80,0.7) 100%)",
           zIndex: 1,
         }}
       />
@@ -123,7 +123,7 @@ export default function HeroSection() {
           width: 120,
           height: 120,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(46,204,113,0.12) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(33,110,182,0.12) 0%, transparent 70%)",
           zIndex: 1,
           display: { xs: "none", md: "block" },
         }}
@@ -193,7 +193,7 @@ export default function HeroSection() {
             aria-label="Give Wings to Dreams"
           >
             Give{" "}
-            <Box component="span" sx={{ color: "#2ECC71" }}>
+            <Box component="span" sx={{ color: "#42A5F5" }}>
               Wings
             </Box>{" "}
             to{" "}

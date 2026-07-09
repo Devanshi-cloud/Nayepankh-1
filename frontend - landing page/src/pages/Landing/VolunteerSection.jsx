@@ -54,7 +54,7 @@ export default function VolunteerSection() {
           width: 400,
           height: 400,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(46,204,113,0.08) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(33,110,182,0.08) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -85,7 +85,7 @@ export default function VolunteerSection() {
                 variant="overline"
                 component="span"
                 sx={{
-                  color: "#2ECC71",
+                  color: "#42A5F5",
                   fontWeight: 700,
                   letterSpacing: 3,
                   fontSize: "0.85rem",
@@ -149,11 +149,11 @@ export default function VolunteerSection() {
                           width: 44,
                           height: 44,
                           borderRadius: "50%",
-                          bgcolor: "rgba(46,204,113,0.15)",
+                          bgcolor: "rgba(33,110,182,0.15)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: "#2ECC71",
+                          color: "#216eb6",
                           flexShrink: 0,
                         }}
                       >
@@ -193,7 +193,7 @@ export default function VolunteerSection() {
                   endIcon={<ArrowForward />}
                   onClick={() => navigate("/register")}
                   sx={{
-                    bgcolor: "#2ECC71",
+                    bgcolor: "#216eb6",
                     color: "#FFFFFF",
                     fontWeight: 700,
                     py: 1.8,
@@ -201,11 +201,11 @@ export default function VolunteerSection() {
                     borderRadius: 50,
                     textTransform: "none",
                     fontSize: { xs: "0.95rem", md: "1.05rem" },
-                    boxShadow: "0 8px 25px rgba(46,204,113,0.3)",
+                    boxShadow: "0 8px 25px rgba(33,110,182,0.3)",
                     "&:hover": {
-                      bgcolor: "#27AE60",
+                      bgcolor: "#1a5a9e",
                       transform: "translateY(-3px)",
-                      boxShadow: "0 12px 35px rgba(46,204,113,0.4)",
+                      boxShadow: "0 12px 35px rgba(33,110,182,0.4)",
                     },
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}

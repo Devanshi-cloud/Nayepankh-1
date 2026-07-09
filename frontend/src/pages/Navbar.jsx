@@ -198,7 +198,7 @@ export default function Navbar() {
                       height: "3px",
                       bottom: "-6px",
                       left: 0,
-                      bgcolor: "#2ECC71",
+                      bgcolor: "#42A5F5",
                       transition: "width 0.3s ease",
                       borderRadius: 2,
                     },
@@ -283,7 +283,7 @@ export default function Navbar() {
               alignItems: "center",
               justifyContent: "center",
               flexDirection: "column",
-              borderBottom: "2px solid rgba(46, 204, 113, 0.15)",
+              borderBottom: "2px solid rgba(33, 110, 182, 0.15)",
             }}
           >
             <img
@@ -295,7 +295,7 @@ export default function Navbar() {
               variant="h6"
               sx={{
                 fontWeight: 700,
-                color: "#2ECC71",
+                color: "#216eb6",
                 fontSize: { xs: "1.3rem", sm: "1.5rem" },
               }}
             >
@@ -317,8 +317,8 @@ export default function Navbar() {
                     px: 3,
                     fontSize: "0.95rem",
                     "&:hover": {
-                      bgcolor: "rgba(46, 204, 113, 0.08)",
-                      color: "#2ECC71",
+                      bgcolor: "rgba(33, 110, 182, 0.08)",
+                      color: "#216eb6",
                       pl: 4,
                     },
                     transition: "all 0.3s ease",
@@ -329,7 +329,7 @@ export default function Navbar() {
               </ListItem>
             ))}
           </List>
-          <Divider sx={{ borderColor: "rgba(46, 204, 113, 0.15)" }} />
+          <Divider sx={{ borderColor: "rgba(33, 110, 182, 0.15)" }} />
           <Box sx={{ p: 2 }}>
             <Button
               variant="contained"

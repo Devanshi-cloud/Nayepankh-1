@@ -1,120 +1,33 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
-import gsap from "gsap";
+import { motion } from "framer-motion";
 import mainLogo from "../assets/NayePankh-logo.png";
 
 const LoadingScreen = ({ onComplete }) => {
-  const [percent, setPercent] = useState(0);
-  const containerRef = useRef(null);
-  const logoRef = useRef(null);
-  const heartRef = useRef(null);
-  const coinContainerRef = useRef(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const animations = [];
+    const duration = 2500;
+    const interval = 30;
+    const step = 100 / (duration / interval);
 
-    // 1. Percentage counter animation
-    const obj = { value: 0 };
-    const pctAnim = gsap.to(obj, {
-      value: 100,
-      duration: 2.5,
-      ease: "power1.inOut",
-      onUpdate: () => {
-        setPercent(Math.floor(obj.value));
-      },
-      onComplete: () => {
-        // Fade out transition after hitting 100%
-        if (containerRef.current) {
-          gsap.to(containerRef.current, {
-            opacity: 0,
-            duration: 0.5,
-            ease: "power2.inOut",
-            onComplete: onComplete,
-          });
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + step;
+        if (next >= 100) {
+          clearInterval(timer);
+          setTimeout(onComplete, 500);
+          return 100;
         }
-      },
-    });
-    animations.push(pctAnim);
-
-    // 2. Logo entrance
-    if (logoRef.current) {
-      const logoAnim1 = gsap.fromTo(
-        logoRef.current,
-        { scale: 0.3, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.7)" }
-      );
-      animations.push(logoAnim1);
-
-      // Continuous Logo Heartbeat / Pulse
-      const logoAnim2 = gsap.to(logoRef.current, {
-        scale: 1.05,
-        duration: 0.6,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
+        return Math.min(next, 100);
       });
-      animations.push(logoAnim2);
-    }
+    }, interval);
 
-    // 3. Heart heartbeat animation
-    if (heartRef.current) {
-      const heartAnim = gsap.to(heartRef.current, {
-        scale: 1.25,
-        duration: 0.4,
-        repeat: -1,
-        yoyo: true,
-        ease: "power1.inOut",
-      });
-      animations.push(heartAnim);
-    }
-
-    // 4. Floating Coins/Hearts animation
-    const coinContainer = coinContainerRef.current;
-    if (coinContainer) {
-      for (let i = 0; i < 15; i++) {
-        const item = document.createElement("div");
-        const isHeart = Math.random() > 0.5;
-        
-        item.style.position = "absolute";
-        item.style.bottom = "-50px";
-        item.style.left = `${Math.random() * 100}%`;
-        item.style.fontSize = `${16 + Math.random() * 20}px`;
-        item.style.userSelect = "none";
-        item.style.pointerEvents = "none";
-        item.innerText = isHeart ? "❤️" : "🪙";
-        coinContainer.appendChild(item);
-
-        const floatAnim = gsap.to(item, {
-          y: -window.innerHeight - 100,
-          x: (Math.random() - 0.5) * 150,
-          rotation: Math.random() * 360,
-          duration: 2 + Math.random() * 2,
-          delay: Math.random() * 1.2,
-          ease: "power1.out",
-          opacity: 0,
-          onComplete: () => {
-            if (coinContainer.contains(item)) {
-              coinContainer.removeChild(item);
-            }
-          },
-        });
-        animations.push(floatAnim);
-      }
-    }
-
-    // Cleanup: kill all animations on unmount
-    return () => {
-      animations.forEach((anim) => {
-        if (anim && typeof anim.kill === "function") {
-          anim.kill();
-        }
-      });
-    };
+    return () => clearInterval(timer);
   }, [onComplete]);
 
   return (
     <Box
-      ref={containerRef}
       sx={{
         position: "fixed",
         top: 0,
@@ -130,35 +43,32 @@ const LoadingScreen = ({ onComplete }) => {
         overflow: "hidden",
       }}
     >
-      {/* Background container for floating particles */}
+      {/* Background decorative gradient */}
       <Box
-        ref={coinContainerRef}
+        component={motion.div}
+        animate={{ opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         sx={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
+          width: "500px",
+          height: "500px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(33,110,182,0.06) 0%, transparent 70%)",
           pointerEvents: "none",
-          zIndex: 1,
         }}
       />
 
-      {/* Main Logo Container */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          zIndex: 2,
-          position: "relative",
-        }}
+      {/* Main Logo */}
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "back.out(1.7)" }}
       >
         <Box
-          ref={logoRef}
           sx={{
-            width: 180,
-            height: 150,
+            width: 160,
+            height: 130,
             bgcolor: "#fff",
             boxShadow: "0px 10px 30px rgba(0,0,0,0.06)",
             borderRadius: 3,
@@ -175,56 +85,91 @@ const LoadingScreen = ({ onComplete }) => {
             style={{ width: "90%", height: "auto", objectFit: "contain" }}
           />
         </Box>
+      </motion.div>
 
-        {/* Pulse Heart */}
-        <Typography
-          ref={heartRef}
-          sx={{
-            fontSize: "2rem",
-            mb: 2,
-            display: "inline-block",
+      {/* Spinning Outer Ring with Pulse */}
+      <Box sx={{ position: "relative", width: 64, height: 64, mb: 3 }}>
+        {/* Outer spinning ring */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: "50%",
+            border: "4px solid rgba(33,110,182,0.15)",
+            borderTopColor: "#216eb6",
+            borderRightColor: "#42A5F5",
           }}
-        >
-          ❤️
-        </Typography>
-
-        {/* Percentage Counter */}
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: "bold",
-            color: "#216eb6",
-            fontFamily: "'Poppins', sans-serif",
-            mb: 2,
-          }}
-        >
-          {percent}%
-        </Typography>
-
-        {/* Progress Bar Container */}
-        <Box
-          sx={{
-            width: "280px",
-            height: 8,
-            bgcolor: "#e0e0e0",
-            borderRadius: 4,
-            overflow: "hidden",
-            boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+        />
+        {/* Inner pulsing dot */}
+        <motion.div
+          animate={{ scale: [0.8, 1.2, 0.8] }}
+          transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <Box
             sx={{
-              width: `${percent}%`,
-              height: "100%",
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
               bgcolor: "#216eb6",
-              backgroundImage: "linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent)",
-              backgroundSize: "1rem 1rem",
-              borderRadius: 4,
-              transition: "width 0.1s linear",
+              boxShadow: "0 0 12px rgba(33,110,182,0.4)",
             }}
           />
-        </Box>
+        </motion.div>
+      </Box>
 
+      {/* Progress Percentage */}
+      <Typography
+        variant="h4"
+        sx={{
+          fontWeight: "bold",
+          color: "#216eb6",
+          fontFamily: "'Poppins', sans-serif",
+          mb: 2,
+        }}
+      >
+        {Math.floor(progress)}%
+      </Typography>
+
+      {/* Progress Bar */}
+      <Box
+        sx={{
+          width: "280px",
+          height: 6,
+          bgcolor: "#e0e0e0",
+          borderRadius: 3,
+          overflow: "hidden",
+          boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+        }}
+      >
+        <motion.div
+          initial={{ width: "0%" }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.1, ease: "linear" }}
+          style={{
+            height: "100%",
+            borderRadius: 3,
+            background:
+              "linear-gradient(90deg, #42A5F5, #216eb6)",
+            boxShadow: "0 0 8px rgba(33,110,182,0.3)",
+          }}
+        />
+      </Box>
+
+      {/* Tagline */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
+      >
         <Typography
           variant="caption"
           sx={{
@@ -238,7 +183,7 @@ const LoadingScreen = ({ onComplete }) => {
         >
           Creating wings for dreams...
         </Typography>
-      </Box>
+      </motion.div>
     </Box>
   );
 };

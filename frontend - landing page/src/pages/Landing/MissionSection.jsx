@@ -18,14 +18,14 @@ const missions = [
     title: "Education",
     description:
       "Providing quality education and learning resources to underprivileged children, enabling them to build a brighter future.",
-    color: "#2ECC71",
+    color: "#216eb6",
   },
   {
     icon: <HealthAndSafetyOutlined sx={{ fontSize: 48 }} />,
     title: "Healthcare",
     description:
       "Ensuring access to essential healthcare services, medical checkups, and health awareness programs for marginalized communities.",
-    color: "#3498DB",
+    color: "#42A5F5",
   },
   {
     icon: <Diversity3Outlined sx={{ fontSize: 48 }} />,

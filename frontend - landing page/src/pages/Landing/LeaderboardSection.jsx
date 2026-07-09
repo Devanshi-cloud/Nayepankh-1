@@ -231,9 +231,9 @@ export default function LeaderboardSection() {
                         height: 44,
                         bgcolor:
                           index === 0
-                            ? "#2ECC71"
+                            ? "#216eb6"
                             : index === 1
-                            ? "#3498DB"
+                            ? "#42A5F5"
                             : index === 2
                             ? "#F1C40F"
                             : "rgba(0,0,0,0.1)",

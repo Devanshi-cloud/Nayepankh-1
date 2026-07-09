@@ -267,36 +267,23 @@ router.post("/login", async (req, res) => {
 
     if (user.role === 'Intern') {
       if (!user.email_verified) return res.status(400).json({ msg: 'Please verify your registration OTP first.' });
-      
-      const otp = generateOTP();
-      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-      await supabase
-        .from("users")
-        .update({
-          otp,
-          otp_expiry: otpExpiry
-        })
-        .eq("id", user.id);
-
-      await sendOTP(email, otp);
-      return res.json({ msg: 'OTP sent to email. Please verify to login.', email });
-    } else {
-      const payload = { id: user.id, role: user.role };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
-      return res.json({ 
-        msg: "Login successful", 
-        token, 
-        user: {
-          id: user.id,
-          firstname: user.first_name,
-          lastname: user.last_name,
-          email,
-          role: user.role,
-          referralCode: user.referral_code
-        } 
-      });
     }
+    
+    // All users (Intern, Admin, Super Admin) log in directly with email/password
+    const payload = { id: user.id, role: user.role };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
+    return res.json({ 
+      msg: "Login successful", 
+      token, 
+      user: {
+        id: user.id,
+        firstname: user.first_name,
+        lastname: user.last_name,
+        email,
+        role: user.role,
+        referralCode: user.referral_code
+      } 
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ msg: "Server error during login", error: err.message });

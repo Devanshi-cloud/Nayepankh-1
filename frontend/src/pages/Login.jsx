@@ -1,7 +1,6 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { buildApiUrl } from '../constants.js';
 import { IS_PREVIEW_MODE } from '../supabaseClient.js';
-import { getMockUser } from '../mockData.js';
 import {
   Typography,
   Box,
@@ -23,75 +22,8 @@ import loginImage from "../assets/loginBgm.jpg";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
-const OTP_LENGTH = 6;
-
-const OtpInput = ({ value, onChange, loading }) => {
-  const inputs = useRef([]);
-  const handleChange = (e, idx) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    if (!val) return;
-    let otpArr = value.split("");
-    otpArr[idx] = val[val.length - 1];
-    const newOtp = otpArr.join("");
-    onChange(newOtp);
-    if (val && idx < OTP_LENGTH - 1) {
-      inputs.current[idx + 1].focus();
-    }
-  };
-  const handlePaste = (e) => {
-    const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, OTP_LENGTH);
-    if (paste.length === OTP_LENGTH) {
-      onChange(paste);
-      inputs.current[OTP_LENGTH - 1].focus();
-      e.preventDefault();
-    }
-  };
-  const handleKeyDown = (e, idx) => {
-    if (e.key === "Backspace" && !value[idx] && idx > 0) {
-      inputs.current[idx - 1].focus();
-    }
-  };
-  return (
-    <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 2 }}>
-      {[...Array(OTP_LENGTH)].map((_, idx) => (
-        <input
-          key={idx}
-          ref={el => inputs.current[idx] = el}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[idx] || ""}
-          onChange={e => handleChange(e, idx)}
-          onPaste={handlePaste}
-          onKeyDown={e => handleKeyDown(e, idx)}
-          disabled={loading}
-          style={{
-            width: 44,
-            height: 54,
-            fontSize: "2rem",
-            textAlign: "center",
-            border: "2px solid #216eb6",
-            borderRadius: 8,
-            background: "#fafdff",
-            color: "#216eb6",
-            outline: "none",
-            boxShadow: "0 2px 8px rgba(33,110,182,0.07)",
-            transition: "border 0.2s, box-shadow 0.2s",
-            marginRight: idx !== OTP_LENGTH - 1 ? 8 : 0,
-            fontWeight: 600,
-            letterSpacing: 2,
-          }}
-        />
-      ))}
-    </Box>
-  );
-};
-
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // 1: login form, 2: otp, 3: done
-  const [internEmail, setInternEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -108,7 +40,6 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    // Check if it's likely an intern (Gmail address) and validate
     if (validateGmail(formData.email)) {
       if (!validateGmail(formData.email)) {
         toast.error("Please use a valid Gmail address for intern login.");
@@ -132,11 +63,10 @@ const Login = () => {
           setLoading(false);
           navigate("/moderator");
         } else {
-          // Intern login
-          setInternEmail(formData.email);
-          setStep(2);
-          toast.info("OTP sent to your email. Please verify (Preview OTP: 123456).");
+          localStorage.setItem("token", "mock-intern-token");
+          toast.success("Login successful (Preview: Intern)!");
           setLoading(false);
+          navigate("/dashboard");
         }
       }, 600);
       return;
@@ -150,17 +80,14 @@ const Login = () => {
       });
       const data = await response.json();
       
-      if (response.ok && data.msg && data.msg.includes("OTP sent")) {
-        setInternEmail(formData.email);
-        setStep(2); // Show OTP input
-        toast.info("OTP sent to your email.");
-        setLoading(false);
-      } else if (response.ok && data.token) {
+      if (response.ok && data.token) {
         localStorage.setItem("token", data.token);
-        let role = data.user.role;
+        let role = data.user?.role;
         if (!role) {
-          const decoded = jwtDecode(data.token);
-          role = decoded.role;
+          try {
+            const decoded = jwtDecode(data.token);
+            role = decoded.role;
+          } catch {}
         }
         toast.success("Login successful!");
         setLoading(false);
@@ -173,47 +100,6 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("An error occurred. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  const handleOtpSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    if (IS_PREVIEW_MODE) {
-      if (otp !== "123456") {
-        toast.error("Invalid OTP. For testing, use: 123456");
-        setLoading(false);
-        return;
-      }
-      setTimeout(() => {
-        localStorage.setItem("token", "mock-intern-token");
-        toast.success("Login successful!");
-        setLoading(false);
-        navigate("/dashboard");
-      }, 600);
-      return;
-    }
-
-    try {
-      const response = await fetch(buildApiUrl("/api/auth/login-verify-otp"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: internEmail, otp }),
-      });
-      const data = await response.json();
-      if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        toast.success("Login successful!");
-        setLoading(false);
-        navigate("/dashboard");
-      } else {
-        toast.error(data.msg || "OTP verification failed");
-        setLoading(false);
-      }
-    } catch (error) {
       toast.error("An error occurred. Please try again.");
       setLoading(false);
     }
@@ -286,144 +172,100 @@ const Login = () => {
                 </Typography>
               </Box>
               <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-                {step === 1 && (
-                  <Box component="form" onSubmit={handleLogin}>
-                    <Grid container spacing={{ xs: 2, sm: 3 }}>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          label="Gmail Address"
-                          name="email"
-                          variant="outlined"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                          type="email"
-                          placeholder="Enter your Gmail address"
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <Box
-                                  component="img"
-                                  src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg"
-                                  alt="Gmail"
-                                  sx={{
-                                    width: 24,
-                                    height: 24,
-                                    opacity: validateGmail(formData.email) ? 1 : 0.3,
-                                  }}
-                                />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          label="Password"
-                          name="password"
-                          variant="outlined"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          required
-                          type="password"
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          type="submit"
-                          disabled={loading}
-                          sx={{
-                            py: { xs: 1, sm: 1.5 },
-                            fontSize: { xs: "1rem", sm: "1.2rem" },
-                            fontWeight: 700,
-                            borderRadius: 2,
-                            bgcolor: "secondary.main",
-                            "&:hover": { bgcolor: "#1E88E5" },
-                            boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-                            transition: "all 0.3s ease",
-                            color: "white",
-                            position: "relative",
-                          }}
-                        >
-                          {loading ? (
-                            <CircularProgress
-                              size={24}
-                              sx={{
-                                color: "white",
-                                position: "absolute",
-                                top: "50%",
-                                left: "50%",
-                                marginTop: "-12px",
-                                marginLeft: "-12px",
-                              }}
-                            />
-                          ) : (
-                            "Login"
-                          )}
-                        </Button>
-                      </Grid>
-                      <Grid item xs={12} sx={{ textAlign: "center" }}>
-                        <Link
-                          href="/register"
-                          variant="body2"
-                          sx={{
-                            color: "primary.main",
-                            fontSize: { xs: "0.8rem", sm: "1rem" },
-                            textDecoration: "underline",
-                          }}
-                        >
-                          New User? Please Register
-                        </Link>
-                      </Grid>
+                <Box component="form" onSubmit={handleLogin}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Gmail Address"
+                        name="email"
+                        variant="outlined"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        type="email"
+                        placeholder="Enter your Gmail address"
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Box
+                                component="img"
+                                src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg"
+                                alt="Gmail"
+                                sx={{
+                                  width: 24,
+                                  height: 24,
+                                  opacity: validateGmail(formData.email) ? 1 : 0.3,
+                                }}
+                              />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
                     </Grid>
-                  </Box>
-                )}
-                {step === 2 && (
-                  <Box component="form" onSubmit={handleOtpSubmit}>
-                    <Typography variant="body2" sx={{ mb: 2, textAlign: 'center', fontWeight: 500, color: 'primary.main' }}>
-                      Enter the 6-digit OTP sent to your email
-                    </Typography>
-                    <OtpInput value={otp} onChange={setOtp} loading={loading} />
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      type="submit"
-                      disabled={loading || otp.length !== 6}
-                      sx={{
-                        py: { xs: 1, sm: 1.5 },
-                        fontSize: { xs: "1rem", sm: "1.2rem" },
-                        fontWeight: 700,
-                        borderRadius: 2,
-                        bgcolor: "secondary.main",
-                        "&:hover": { bgcolor: "#1E88E5" },
-                        boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-                        transition: "all 0.3s ease",
-                        color: "white",
-                        position: "relative",
-                      }}
-                    >
-                      {loading ? (
-                        <CircularProgress
-                          size={24}
-                          sx={{
-                            color: "white",
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            marginTop: "-12px",
-                            marginLeft: "-12px",
-                          }}
-                        />
-                      ) : (
-                        "Verify OTP & Login"
-                      )}
-                    </Button>
-                  </Box>
-                )}
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Password"
+                        name="password"
+                        variant="outlined"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        type="password"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        type="submit"
+                        disabled={loading}
+                        sx={{
+                          py: { xs: 1, sm: 1.5 },
+                          fontSize: { xs: "1rem", sm: "1.2rem" },
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          bgcolor: "secondary.main",
+                          "&:hover": { bgcolor: "#1E88E5" },
+                          boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                          transition: "all 0.3s ease",
+                          color: "white",
+                          position: "relative",
+                        }}
+                      >
+                        {loading ? (
+                          <CircularProgress
+                            size={24}
+                            sx={{
+                              color: "white",
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              marginTop: "-12px",
+                              marginLeft: "-12px",
+                            }}
+                          />
+                        ) : (
+                          "Login"
+                        )}
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} sx={{ textAlign: "center" }}>
+                      <Link
+                        href="/register"
+                        variant="body2"
+                        sx={{
+                          color: "primary.main",
+                          fontSize: { xs: "0.8rem", sm: "1rem" },
+                          textDecoration: "underline",
+                        }}
+                      >
+                        New User? Please Register
+                      </Link>
+                    </Grid>
+                  </Grid>
+                </Box>
               </CardContent>
             </Box>
           </Card>

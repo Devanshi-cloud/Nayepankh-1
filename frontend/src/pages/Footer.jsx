@@ -69,7 +69,7 @@ function Footer() {
               variant="h5"
               sx={{
                 fontWeight: 700,
-                color: "#2ECC71",
+                color: "#216eb6",
                 mb: 2,
                 fontSize: { xs: "1.5rem", md: "2rem" },
               }}
@@ -91,7 +91,7 @@ function Footer() {
                   sx={{
                     color: "#34495E",
                     fontWeight: 600,
-                    "&:hover": { color: "#2ECC71" },
+                    "&:hover": { color: "#216eb6" },
                     transition: "color 0.3s ease",
                     fontSize: { xs: "0.9rem", md: "1rem" },
                   }}
@@ -105,7 +105,7 @@ function Footer() {
                   sx={{
                     color: "#34495E",
                     fontWeight: 600,
-                    "&:hover": { color: "#2ECC71" },
+                    "&:hover": { color: "#216eb6" },
                     transition: "color 0.3s ease",
                     fontSize: { xs: "0.9rem", md: "1rem" },
                   }}
@@ -119,7 +119,7 @@ function Footer() {
                   sx={{
                     color: "#34495E",
                     fontWeight: 600,
-                    "&:hover": { color: "#2ECC71" },
+                    "&:hover": { color: "#216eb6" },
                     transition: "color 0.3s ease",
                     fontSize: { xs: "0.9rem", md: "1rem" },
                   }}
@@ -133,7 +133,7 @@ function Footer() {
                   sx={{
                     color: "#34495E",
                     fontWeight: 600,
-                    "&:hover": { color: "#2ECC71" },
+                    "&:hover": { color: "#216eb6" },
                     transition: "color 0.3s ease",
                     fontSize: { xs: "0.9rem", md: "1rem" },
                   }}
@@ -147,7 +147,7 @@ function Footer() {
                   sx={{
                     color: "#34495E",
                     fontWeight: 600,
-                    "&:hover": { color: "#2ECC71" },
+                    "&:hover": { color: "#216eb6" },
                     transition: "color 0.3s ease",
                     fontSize: { xs: "0.9rem", md: "1rem" },
                   }}
@@ -165,10 +165,10 @@ function Footer() {
           xs={12}
           md={6}
           sx={{
-            bgcolor: "#34495E",
+            bgcolor: "#1a3a5c",
             background: `
-              linear-gradient(135deg, rgba(46, 204, 113, 0.2) 0%, rgba(241, 196, 15, 0.2) 100%),
-              #34495E
+              linear-gradient(135deg, rgba(33, 110, 182, 0.2) 0%, rgba(66, 165, 245, 0.2) 100%),
+              #1a3a5c
             `,
             display: "flex",
             flexDirection: "column",
@@ -247,11 +247,11 @@ function Footer() {
               <IconButton
                 aria-label="Facebook"
                 href="https://www.facebook.com/nayepankhfoundation"
-                target="_blank" // Add this line
-                rel="noopener noreferrer" // Recommended for security
+                target="_blank"
+                rel="noopener noreferrer"
                 sx={{
-                  color: "#2ECC71",
-                  "&:hover": { color: "#27AE60" },
+                  color: "#42A5F5",
+                  "&:hover": { color: "#216eb6" },
                   bgcolor: "rgba(255, 255, 255, 0.1)",
                   borderRadius: "50%",
                   p: 1,
@@ -266,8 +266,8 @@ function Footer() {
                 target="_blank" // Add this line
                 rel="noopener noreferrer" // Recommended for security
                 sx={{
-                  color: "#2ECC71",
-                  "&:hover": { color: "#27AE60" },
+                  color: "#42A5F5",
+                  "&:hover": { color: "#216eb6" },
                   bgcolor: "rgba(255, 255, 255, 0.1)",
                   borderRadius: "50%",
                   p: 1,
@@ -282,8 +282,8 @@ function Footer() {
                 target="_blank" // Add this line
                 rel="noopener noreferrer" // Recommended for security
                 sx={{
-                  color: "#2ECC71",
-                  "&:hover": { color: "#27AE60" },
+                  color: "#42A5F5",
+                  "&:hover": { color: "#216eb6" },
                   bgcolor: "rgba(255, 255, 255, 0.1)",
                   borderRadius: "50%",
                   p: 1,
@@ -298,8 +298,8 @@ function Footer() {
                 target="_blank" // Add this line
                 rel="noopener noreferrer" // Recommended for security
                 sx={{
-                  color: "#2ECC71",
-                  "&:hover": { color: "#27AE60" },
+                  color: "#42A5F5",
+                  "&:hover": { color: "#216eb6" },
                   bgcolor: "rgba(255, 255, 255, 0.1)",
                   borderRadius: "50%",
                   p: 1,
@@ -316,7 +316,7 @@ function Footer() {
       {/* Bottom Tagline */}
       <Box
         sx={{
-          bgcolor: "#34495E",
+          bgcolor: "#1a3a5c",
           py: 1.5,
           textAlign: "center",
           width: "100%",
