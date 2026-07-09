@@ -256,7 +256,7 @@ const DashboardPage = () => {
         const dData = await dRes.json();
         if (dRes.ok) {
           const raised = (dData.donations || []).reduce((sum, d) => sum + d.amount, 0);
-          setUserGoalData({ totalRaised: raised, totalGoal: uData.user.goal || 30000 });
+          setUserGoalData({ totalRaised: raised, totalGoal: (uData && uData.user && uData.user.goal) || 30000 });
         }
       } catch (err) {
         console.error(err);
