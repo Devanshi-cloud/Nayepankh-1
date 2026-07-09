@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
+
+// Loading Screen
+import LoadingScreen from "./components/LoadingScreen";
 
 // Landing Page Components
 import Home from "./pages/Home";
@@ -74,6 +77,12 @@ function PortalLayout() {
 }
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  if (loading) {
+    return <LoadingScreen onComplete={() => setLoading(false)} />;
+  }
+
   return (
     <Router>
       <Routes>

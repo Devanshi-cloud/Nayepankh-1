@@ -3,26 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// IS_PREVIEW_MODE still exported for other modules; no dummy client is provided
+// (the real client will fail gracefully on its own)
 export const IS_PREVIEW_MODE = !supabaseUrl || !supabaseAnonKey;
 
-if (IS_PREVIEW_MODE) {
-  console.warn("⚠️ Supabase environment variables are missing. Running in PREVIEW/MOCK MODE.");
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("❌ Fatal: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in .env");
 }
 
-// Export a dummy client if in preview mode so that calls to it do not crash the app
-export const supabase = IS_PREVIEW_MODE 
-  ? {
-      auth: {
-        getSession: async () => ({ data: { session: null }, error: null }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      },
-      from: () => ({
-        select: () => ({
-          eq: () => Promise.resolve({ data: [], error: null }),
-          order: () => Promise.resolve({ data: [], error: null }),
-        }),
-        insert: () => Promise.resolve({ data: [], error: null }),
-        update: () => Promise.resolve({ data: [], error: null }),
-      })
-    }
-  : createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');

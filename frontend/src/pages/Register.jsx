@@ -1,7 +1,5 @@
 import { useState, useRef } from "react";
 import { buildApiUrl } from '../constants.js';
-import { IS_PREVIEW_MODE } from '../supabaseClient.js';
-import { saveMockUser } from '../mockData.js';
 import {
   Typography,
   Box,
@@ -122,15 +120,6 @@ const Register = () => {
     }
     
     setLoading(true);
-    if (IS_PREVIEW_MODE) {
-      setTimeout(() => {
-        setInternEmail(formData.email);
-        setStep(2); // Show OTP input
-        toast.info("OTP sent to your email. Please verify (Preview OTP: 123456).");
-        setLoading(false);
-      }, 600);
-      return;
-    }
 
     try {
       const response = await fetch(buildApiUrl("/api/auth/signup"), {
@@ -141,11 +130,10 @@ const Register = () => {
       const data = await response.json();
       if (response.ok && data.msg && data.msg.includes("OTP sent")) {
         setInternEmail(formData.email);
-        setStep(2); // Show OTP input
+        setStep(2);
         toast.info("OTP sent to your email. Please verify.");
         setLoading(false);
       } else if (response.ok && data.token) {
-        // Admin/Super Admin
         localStorage.setItem("token", data.token);
         toast.success("Registration successful!");
         setLoading(false);
@@ -155,7 +143,7 @@ const Register = () => {
         setLoading(false);
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(error.message || "Network error. Please check your connection and try again.");
       setLoading(false);
     }
   };
@@ -163,31 +151,6 @@ const Register = () => {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    if (IS_PREVIEW_MODE) {
-      if (otp !== "123456") {
-        toast.error("Invalid OTP. For testing, use: 123456");
-        setLoading(false);
-        return;
-      }
-      setTimeout(() => {
-        saveMockUser({
-          firstname: formData.firstname,
-          lastname: formData.lastname,
-          email: formData.email,
-          whatsapp: "",
-          goal: 30000,
-          referralCode: "DEVA6656",
-        });
-        setStep(3);
-        toast.success("Registration verified! Redirecting to login page...");
-        setLoading(false);
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 1000);
-      }, 600);
-      return;
-    }
 
     try {
       const response = await fetch(buildApiUrl("/api/auth/verify-otp"), {
@@ -208,7 +171,7 @@ const Register = () => {
         setLoading(false);
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(error.message || "Network error. Please check your connection and try again.");
       setLoading(false);
     }
   };

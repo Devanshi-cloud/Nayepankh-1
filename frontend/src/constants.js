@@ -19,6 +19,6 @@ export const buildApiUrl = (path) => {
 
   // 3. Fallback to the deployment backend URL if hosted separately, 
   // or use relative paths if hosted on the same domain.
-  const vercelBackendUrl = "https://naye-pankh-intern-portal-ox93.vercel.app";
+  const vercelBackendUrl = "https://backend-eta-bice-43.vercel.app";
   return `${vercelBackendUrl}${path}`;
 };

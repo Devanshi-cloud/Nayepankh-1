@@ -12,7 +12,7 @@ import {
   LinearProgress,
 } from "@mui/material";
 import { motion } from "framer-motion";
-import { VolunteerActivismOutlined, CalendarMonthOutlined } from "@mui/icons-material";
+import { VolunteerActivismOutlined } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { buildApiUrl } from "../../constants";
 
@@ -20,32 +20,8 @@ const prefersReducedMotion = typeof window !== "undefined"
   ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
   : false;
 
-const mockCampaigns = [
-  {
-    _id: "c1",
-    title: "Empower Girls Education",
-    description: "Provide school supplies, books, and uniforms to underprivileged girls in rural communities.",
-    goalAmount: 150000,
-    raisedAmount: 45000,
-    endDate: "2026-08-31",
-  },
-  {
-    _id: "c2",
-    title: "Feed the Hungry",
-    description: "Distribute monthly food rations and warm meals to families facing extreme poverty.",
-    goalAmount: 200000,
-    raisedAmount: 120000,
-    endDate: "2026-09-30",
-  },
-  {
-    _id: "c3",
-    title: "Clean Water Initiative",
-    description: "Install clean drinking water handpumps in dry districts to prevent waterborne illnesses.",
-    goalAmount: 80000,
-    raisedAmount: 62000,
-    endDate: "2026-08-15",
-  },
-];
+const BLUE_GRADIENT = "linear-gradient(135deg, #1976D2, #1565C0)";
+const BLUE_GRADIENT_LIGHT = "linear-gradient(135deg, #42A5F5, #2196F3)";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -84,7 +60,7 @@ function CampaignCard({ campaign, index, onDonate }) {
           "&:hover": {
             transform: "translateY(-8px)",
             boxShadow: "0 20px 60px rgba(0,0,0,0.1)",
-            borderColor: "primary.main",
+            borderColor: "#1976D2",
           },
         }}
       >
@@ -105,7 +81,7 @@ function CampaignCard({ campaign, index, onDonate }) {
             style={{
               height: "100%",
               borderRadius: "inherit",
-              background: `linear-gradient(90deg, ${progress > 60 ? "#2ECC71" : progress > 30 ? "#F1C40F" : "#E74C3C"}, ${progress > 60 ? "#27AE60" : progress > 30 ? "#F39C12" : "#C0392B"})`,
+              background: `linear-gradient(90deg, ${progress > 60 ? "#1976D2" : progress > 30 ? "#42A5F5" : "#FF7043"}, ${progress > 60 ? "#1565C0" : progress > 30 ? "#2196F3" : "#E64A19"})`,
             }}
           />
         </Box>
@@ -116,7 +92,7 @@ function CampaignCard({ campaign, index, onDonate }) {
             component="h3"
             sx={{
               fontWeight: 700,
-              color: "#2C3E50",
+              color: "#1A237E",
               mb: 1.5,
               fontSize: { xs: "1.1rem", md: "1.2rem" },
               lineHeight: 1.3,
@@ -154,7 +130,7 @@ function CampaignCard({ campaign, index, onDonate }) {
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ fontWeight: 700, color: progress > 60 ? "#2ECC71" : "#F1C40F" }}
+                sx={{ fontWeight: 700, color: progress > 60 ? "#1976D2" : "#42A5F5" }}
               >
                 {progress}%
               </Typography>
@@ -165,10 +141,10 @@ function CampaignCard({ campaign, index, onDonate }) {
               sx={{
                 height: 8,
                 borderRadius: 4,
-                bgcolor: "rgba(0,0,0,0.06)",
+                bgcolor: "rgba(25,118,210,0.1)",
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 4,
-                  background: `linear-gradient(90deg, #2ECC71, #27AE60)`,
+                  background: BLUE_GRADIENT,
                 },
               }}
             />
@@ -191,7 +167,7 @@ function CampaignCard({ campaign, index, onDonate }) {
               </Typography>
               <Typography
                 variant="subtitle2"
-                sx={{ fontWeight: 700, color: "primary.main" }}
+                sx={{ fontWeight: 700, color: "#1976D2" }}
               >
                 ₹{campaign.raisedAmount?.toLocaleString()}
               </Typography>
@@ -205,7 +181,7 @@ function CampaignCard({ campaign, index, onDonate }) {
               </Typography>
               <Typography
                 variant="subtitle2"
-                sx={{ fontWeight: 600, color: "#2C3E50" }}
+                sx={{ fontWeight: 600, color: "#37474F" }}
               >
                 ₹{campaign.goalAmount?.toLocaleString()}
               </Typography>
@@ -220,17 +196,18 @@ function CampaignCard({ campaign, index, onDonate }) {
             onClick={() => onDonate(campaign)}
             startIcon={<VolunteerActivismOutlined />}
             sx={{
-              bgcolor: "#2ECC71",
+              background: BLUE_GRADIENT,
               color: "#FFFFFF",
               fontWeight: 700,
               py: 1.3,
               borderRadius: 3,
               textTransform: "none",
               fontSize: { xs: "0.9rem", md: "0.95rem" },
+              boxShadow: "0 4px 14px rgba(25,118,210,0.3)",
               "&:hover": {
-                bgcolor: "#27AE60",
+                background: BLUE_GRADIENT_LIGHT,
                 transform: "scale(1.02)",
-                boxShadow: "0 8px 25px rgba(46,204,113,0.3)",
+                boxShadow: "0 8px 25px rgba(25,118,210,0.4)",
               },
               transition: "all 0.3s ease",
             }}
@@ -247,11 +224,11 @@ export default function CampaignsSection() {
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    // Abort fetch after 5s to avoid hanging on loading skeletons
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
     const fetchCampaigns = async () => {
       try {
@@ -260,14 +237,16 @@ export default function CampaignsSection() {
         });
         clearTimeout(timeout);
         const data = await response.json();
-        if (response.ok && data.campaigns?.length) {
-          setCampaigns(data.campaigns);
-        } else {
-          setCampaigns(mockCampaigns);
+        if (!response.ok) {
+          throw new Error(data.msg || data.error || `HTTP ${response.status}`);
         }
-      } catch {
+        if (!data.campaigns?.length) {
+          throw new Error("No active campaigns available.");
+        }
+        setCampaigns(data.campaigns);
+      } catch (err) {
         clearTimeout(timeout);
-        setCampaigns(mockCampaigns);
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
@@ -275,7 +254,6 @@ export default function CampaignsSection() {
 
     fetchCampaigns();
 
-    // Cleanup: prevent state updates after unmount
     return () => {
       clearTimeout(timeout);
       controller.abort();
@@ -358,26 +336,67 @@ export default function CampaignsSection() {
           whileInView={prefersReducedMotion ? {} : "visible"}
           viewport={{ once: true, margin: "-50px" }}
         >
-          {isLoading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
-                  <Skeleton
-                    variant="rounded"
-                    height={350}
-                    animation="wave"
-                    sx={{ borderRadius: 4, bgcolor: "grey.100" }}
-                  />
-                </Grid>
-              ))
-            : campaigns.map((campaign, index) => (
-                <Grid item xs={12} sm={6} md={4} key={campaign._id}>
-                  <CampaignCard
-                    campaign={campaign}
-                    index={index}
-                    onDonate={handleDonate}
-                  />
-                </Grid>
-              ))}
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Grid item xs={12} sm={6} md={4} key={i}>
+                <Skeleton
+                  variant="rounded"
+                  height={350}
+                  animation="wave"
+                  sx={{ borderRadius: 4, bgcolor: "grey.100" }}
+                />
+              </Grid>
+            ))
+          ) : error ? (
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  textAlign: "center",
+                  py: 8,
+                  px: 4,
+                  bgcolor: "#FFF5F5",
+                  borderRadius: 4,
+                  border: "1px solid #FFCDD2",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ color: "#C62828", fontWeight: 700, mb: 2 }}
+                >
+                  Unable to Load Campaigns
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#C62828", mb: 3, opacity: 0.8 }}
+                >
+                  {error}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.reload()}
+                  sx={{
+                    color: "#C62828",
+                    borderColor: "#C62828",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    textTransform: "none",
+                  }}
+                >
+                  Retry
+                </Button>
+              </Box>
+            </Grid>
+          ) : (
+            campaigns.map((campaign, index) => (
+              <Grid item xs={12} sm={6} md={4} key={campaign._id}>
+                <CampaignCard
+                  campaign={campaign}
+                  index={index}
+                  onDonate={handleDonate}
+                />
+              </Grid>
+            ))
+          )}
         </Grid>
 
         {/* View All CTA */}
@@ -393,7 +412,7 @@ export default function CampaignsSection() {
             size="large"
             onClick={() => navigate("/donate")}
             sx={{
-              color: "#2C3E50",
+              color: "#37474F",
               borderColor: "rgba(0,0,0,0.2)",
               borderWidth: 2,
               fontWeight: 600,
@@ -403,9 +422,9 @@ export default function CampaignsSection() {
               textTransform: "none",
               fontSize: { xs: "0.95rem", md: "1rem" },
               "&:hover": {
-                borderColor: "#2ECC71",
-                color: "#2ECC71",
-                bgcolor: "rgba(46,204,113,0.05)",
+                borderColor: "#1976D2",
+                color: "#1976D2",
+                bgcolor: "rgba(25,118,210,0.05)",
                 transform: "translateY(-2px)",
               },
               transition: "all 0.3s ease",

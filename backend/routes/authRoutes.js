@@ -43,38 +43,45 @@ const authMiddleware = async (req, res, next) => {
 
 // Utility to send OTP via Nodemailer
 async function sendOTP(email, otp) {
-  let transporter = nodemailer.createTransport({
+  const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS,
+      pass: (process.env.GMAIL_PASS || '').replace(/\s+/g, ''),
     },
   });
-  await transporter.sendMail({
-    from: process.env.GMAIL_USER,
-    to: email,
-    subject: 'Your OTP for NayePankh Portal',
-    html: `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #fafdff; padding: 32px 24px; border-radius: 12px; max-width: 420px; margin: 24px auto; box-shadow: 0 2px 12px rgba(33,110,182,0.07);">
-        <div style="text-align:center;">
-          <h2 style="color: #216eb6; margin: 0 0 8px;">NayePankh Portal</h2>
+
+  try {
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: email,
+      subject: 'Your OTP for NayePankh Portal',
+      html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #fafdff; padding: 32px 24px; border-radius: 12px; max-width: 420px; margin: 24px auto; box-shadow: 0 2px 12px rgba(33,110,182,0.07);">
+          <div style="text-align:center;">
+            <h2 style="color: #216eb6; margin: 0 0 8px;">NayePankh Portal</h2>
+          </div>
+          <p style="font-size: 1.1em; color: #263238; margin-bottom: 18px;">
+            <strong>Your One-Time Password (OTP):</strong>
+          </p>
+          <div style="font-size: 2em; font-weight: bold; color: #1976d2; background: #e3f2fd; padding: 16px 0; border-radius: 8px; letter-spacing: 6px; text-align: center; margin-bottom: 18px;">
+            ${otp}
+          </div>
+          <p style="color: #546E7A; font-size: 0.98em; margin-bottom: 0;">
+            Please use this OTP to complete your action. This code is valid for 10 minutes.<br/>
+            If you did not request this, you can safely ignore this email.
+          </p>
+          <div style="margin-top: 24px; text-align: center; color: #bdbdbd; font-size: 0.9em;">
+            &copy; ${new Date().getFullYear()} NayePankh Foundation
+          </div>
         </div>
-        <p style="font-size: 1.1em; color: #263238; margin-bottom: 18px;">
-          <strong>Your One-Time Password (OTP):</strong>
-        </p>
-        <div style="font-size: 2em; font-weight: bold; color: #1976d2; background: #e3f2fd; padding: 16px 0; border-radius: 8px; letter-spacing: 6px; text-align: center; margin-bottom: 18px;">
-          ${otp}
-        </div>
-        <p style="color: #546E7A; font-size: 0.98em; margin-bottom: 0;">
-          Please use this OTP to complete your action. This code is valid for 10 minutes.<br/>
-          If you did not request this, you can safely ignore this email.
-        </p>
-        <div style="margin-top: 24px; text-align: center; color: #bdbdbd; font-size: 0.9em;">
-          &copy; ${new Date().getFullYear()} NayePankh Foundation
-        </div>
-      </div>
-    `,
-  });
+      `,
+    });
+    return true;
+  } catch (err) {
+    console.error('OTP email delivery failed:', err.message);
+    return false;
+  }
 }
 
 // Generate OTP
@@ -162,7 +169,13 @@ router.post("/signup", async (req, res) => {
           goal_amount: 30000.00
         });
 
-      await sendOTP(email, otp);
+      const emailSent = await sendOTP(email, otp);
+      if (!emailSent) {
+        return res.status(201).json({
+          msg: 'Account created. OTP could not be delivered automatically, but your account is ready for manual verification.',
+          email,
+        });
+      }
       return res.status(201).json({ msg: 'OTP sent to email. Please verify to complete registration.', email });
     } else {
       const { data: newUser, error: insertError } = await supabase

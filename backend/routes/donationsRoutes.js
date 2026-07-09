@@ -99,32 +99,65 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/donations/leaderboard - Fetch leaderboard data
+// GET /api/donations/leaderboard - Fetch leaderboard data (real-time from donations)
 router.get("/leaderboard", async (req, res) => {
   try {
-    const { data: leaderboard, error } = await supabase
-      .from("fundraisers")
+    // Step 1: Fetch all completed donations with referral codes
+    const { data: donationRows, error: dError } = await supabase
+      .from("donations")
       .select(`
-        totalAmount:total_raised,
-        user:user_id (
-          first_name,
-          last_name
-        )
+        referral_code,
+        amount
       `)
-      .gt("total_raised", 0)
-      .order("total_raised", { ascending: false });
+      .eq("payment_status", "completed")
+      .not("referral_code", "is", null);
 
-    if (error) throw error;
+    if (dError) throw dError;
 
-    if (!leaderboard || !leaderboard.length) {
+    if (!donationRows || !donationRows.length) {
       return res.status(404).json({ msg: "No donation data available for leaderboard" });
     }
 
-    // Format fields for frontend charting library
-    const formattedLeaderboard = leaderboard.map(item => ({
-      name: item.user ? `${item.user.first_name} ${item.user.last_name}` : "Unknown Intern",
-      totalAmount: parseFloat(item.totalAmount)
-    }));
+    // Step 2: Aggregate totals by referral_code in JS
+    const totalsMap = {};
+    donationRows.forEach(d => {
+      const rc = d.referral_code;
+      if (!totalsMap[rc]) {
+        totalsMap[rc] = { totalAmount: 0, referralsCount: 0 };
+      }
+      totalsMap[rc].totalAmount += parseFloat(d.amount || 0);
+      totalsMap[rc].referralsCount += 1;
+    });
+
+    // Step 3: Fetch user names for all referral codes
+    const referralCodes = Object.keys(totalsMap);
+    const { data: users, error: uError } = await supabase
+      .from("users")
+      .select("first_name, last_name, referral_code")
+      .in("referral_code", referralCodes);
+
+    if (uError) throw uError;
+
+    // Build user lookup map
+    const userMap = {};
+    (users || []).forEach(u => {
+      userMap[u.referral_code] = u;
+    });
+
+    // Step 4: Build final leaderboard
+    const formattedLeaderboard = referralCodes
+      .map(rc => {
+        const user = userMap[rc] || {};
+        return {
+          name: user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : "Unknown Intern",
+          referralCode: rc,
+          totalAmount: totalsMap[rc].totalAmount,
+          referralsCount: totalsMap[rc].referralsCount,
+        };
+      })
+      .sort((a, b) => b.totalAmount - a.totalAmount);
 
     res.status(200).json({ leaderboard: formattedLeaderboard });
   } catch (err) {

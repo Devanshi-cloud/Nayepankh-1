@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const connectDB = require("./config/db");
 
 const app = express();
@@ -9,6 +8,7 @@ const app = express();
 const allowedOrigins = [
   'https://naye-pankh-intern-portal.vercel.app',  // Main frontend
   'https://naye-pankh-intern-portal-ox93.vercel.app',  // Preview/backend
+  'https://naye-pankh-portal.vercel.app',  // New frontend deployment
   'http://localhost:3000',  // Local dev
   'http://localhost:5173'   // Integrated local dev (Vite)
 ];
@@ -35,20 +35,6 @@ app.use((req, res, next) => {
   
   next();
 });
-
-// Optional: Use cors package as fallback (after manual headers)
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
 app.use(express.json()); // Parse JSON request bodies
 
