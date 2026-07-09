@@ -5,7 +5,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_TEST_KEY_ID || "rzp_test_Mitv03aBlFFlQ0",
+  key_id: process.env.RAZORPAY_TEST_KEY_ID || "rzp_test_TBNBuPaPRaIZWu",
   key_secret: process.env.RAZORPAY_TEST_KEY_SECRET,
 });
 
