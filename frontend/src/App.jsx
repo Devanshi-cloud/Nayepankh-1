@@ -90,7 +90,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Landing Page Subtree (Saffron/Green theme + Top Navbar) */}
+        {/* Landing Page Subtree (Saffron/Blue theme + Top Navbar) */}
         <Route element={<LandingLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />

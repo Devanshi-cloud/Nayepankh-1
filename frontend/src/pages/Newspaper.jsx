@@ -20,7 +20,7 @@ import article4 from "../assets/image3.png";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#2ECC71", // Emerald Green
+      main: "#216EB6", // Deep Blue
     },
     secondary: {
       main: "#F1C40F", // Sunflower Yellow

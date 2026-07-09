@@ -19,7 +19,7 @@ import Footer from "./Footer";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#2ECC71", // Emerald Green
+      main: "#216EB6", // Deep Blue
     },
     secondary: {
       main: "#F1C40F", // Sunflower Yellow
@@ -183,7 +183,7 @@ function AboutUs() {
                         >
                           <strong>2020:</strong> As the world battled the
                           COVID-19 pandemic, a group of high schoolers felt an{" "}
-                          <span style={{ color: "#2ECC71" }}>urge</span> to make
+                          <span style={{ color: "#216EB6" }}>urge</span> to make
                           an impact with whatever resources they had.
                         </Typography>
                       </TimelineContent>
@@ -248,7 +248,7 @@ function AboutUs() {
                         >
                           <strong>March 28, 2021:</strong> Officially founded as
                           NayePankh, we grew from a small group to a{" "}
-                          <span style={{ color: "#2ECC71" }}>team</span>{" "}
+                          <span style={{ color: "#216EB6" }}>team</span>{" "}
                           spanning cities and states, driven by youth.
                         </Typography>
                       </TimelineContent>

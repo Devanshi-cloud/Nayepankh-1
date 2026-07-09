@@ -26,7 +26,7 @@ import { buildApiUrl } from "../constants";
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#2ECC71" },
+    primary: { main: "#216EB6" },
     secondary: { main: "#F1C40F" },
     background: { default: "#FFFFFF" },
     text: { primary: "#34495E" },
@@ -248,7 +248,7 @@ function Donation() {
           email: formData.email,
           contact: `+91${formData.phoneNumber}`,
         },
-        theme: { color: "#2ECC71" },
+        theme: { color: "#216EB6" },
       };
 
       const rzp = new window.Razorpay(options);
@@ -581,11 +581,11 @@ function Donation() {
             >
               <strong>Dear Supporters and Friends,</strong>
               <br /><br />
-              NayePankh Foundation was founded with a simple yet powerful vision - to uplift the underprivileged and marginalized communities and provide them with access to education, healthcare, and basic necessities that we often take for granted. We strongly believe that every child has the right to dream and achieve their aspirations, irrespective of their socio-economic background. We have been working relentlessly towards this goal, but we need <span style={{ color: "#2ECC71", fontWeight: 700 }}>your support</span> to continue our efforts and make a lasting impact.
+              NayePankh Foundation was founded with a simple yet powerful vision - to uplift the underprivileged and marginalized communities and provide them with access to education, healthcare, and basic necessities that we often take for granted. We strongly believe that every child has the right to dream and achieve their aspirations, irrespective of their socio-economic background. We have been working relentlessly towards this goal, but we need <span style={{ color: "#216EB6", fontWeight: 700 }}>your support</span> to continue our efforts and make a lasting impact.
               <br /><br />
               As you read this, countless children and families are struggling to survive without the most basic necessities. They lack access to clean water, sanitation, and proper healthcare facilities. Most of them are unable to attend school due to financial constraints or lack of infrastructure. They are trapped in a cycle of poverty and hopelessness, and they need <span style={{ color: "#F1C40F", fontWeight: 700 }}>our help</span>. We at NayePankh Foundation strive to break this cycle and provide a ray of hope to those in need.
               <br /><br />
-              With your support, we can continue to provide <span style={{ color: "#2ECC71", fontWeight: 700 }}>education</span>, <span style={{ color: "#2ECC71", fontWeight: 700 }}>healthcare</span>, and other basic amenities to these communities. We can empower them to lead better lives and realize their true potential. Every donation, no matter how small, can make a <span style={{ color: "#F1C40F", fontWeight: 700 }}>huge difference</span>. Your support can provide a child with a school uniform, a pair of shoes, or even a nutritious meal. It can provide a family with access to clean water, sanitation, and healthcare facilities. It can change the trajectory of someone's life forever.
+              With your support, we can continue to provide <span style={{ color: "#216EB6", fontWeight: 700 }}>education</span>, <span style={{ color: "#216EB6", fontWeight: 700 }}>healthcare</span>, and other basic amenities to these communities. We can empower them to lead better lives and realize their true potential. Every donation, no matter how small, can make a <span style={{ color: "#F1C40F", fontWeight: 700 }}>huge difference</span>. Your support can provide a child with a school uniform, a pair of shoes, or even a nutritious meal. It can provide a family with access to clean water, sanitation, and healthcare facilities. It can change the trajectory of someone's life forever.
               <br /><br />
               We understand that times are tough, and everyone is going through their own struggles. But we urge you to think of those who are less fortunate and extend a helping hand. Your generosity can make a world of difference to someone in need. We know that we can count on your support to continue our mission. Your donations will help us reach more communities and make a meaningful impact in the lives of those who need it the most.
               <br /><br />
@@ -702,9 +702,9 @@ function Donation() {
                   }}
                 >
                   Imagine for a moment that you are struggling to make ends meet. You're worried about how you'll pay for basic necessities like food, shelter, and healthcare. Now, imagine that someone steps forward and offers a{" "}
-                  <span style={{ color: "#2ECC71", fontWeight: 700 }}>helping hand</span> - a small donation that can make all the difference in your life. That feeling of relief and gratitude is immeasurable. By donating to a cause you care about, you have the{" "}
+                  <span style={{ color: "#216EB6", fontWeight: 700 }}>helping hand</span> - a small donation that can make all the difference in your life. That feeling of relief and gratitude is immeasurable. By donating to a cause you care about, you have the{" "}
                   <span style={{ color: "#F1C40F", fontWeight: 700 }}>power</span> to make that difference in someone's life. You can provide hope and support to those who need it most, and create a ripple effect of kindness and generosity in the world. So, if you have the means to give, think about the{" "}
-                  <span style={{ color: "#2ECC71", fontWeight: 700 }}>impact</span> you can make. Your donation may just be the lifeline that someone desperately needs.
+                  <span style={{ color: "#216EB6", fontWeight: 700 }}>impact</span> you can make. Your donation may just be the lifeline that someone desperately needs.
                 </Typography>
               </Box>
             </Grid>
@@ -827,11 +827,11 @@ function Donation() {
           onClose={handleSnackbarClose}
           icon={false}
           sx={{
-            bgcolor: '#2ECC71',
+            bgcolor: '#216EB6',
             color: '#fff',
             fontWeight: 600,
             fontSize: { xs: '1rem', sm: '1.1rem' },
-            boxShadow: '0px 4px 20px rgba(46,204,113,0.15)',
+            boxShadow: '0px 4px 20px rgba(33,110,182,0.15)',
             border: '2px solid #F1C40F',
             letterSpacing: 0.5,
           }}

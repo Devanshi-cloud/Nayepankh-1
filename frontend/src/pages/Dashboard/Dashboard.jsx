@@ -1168,7 +1168,7 @@ const RewardsView = ({ userGoalData }) => {
   const raised = userGoalData.totalRaised || 0;
   
   const rewards = [
-    { title: "Beginner", threshold: 0, badge: "🌱", color: "#81C784", desc: "Your fundraising journey has begun! Keep sharing." },
+    { title: "Beginner", threshold: 0, badge: "🌱", color: "#64B5F6", desc: "Your fundraising journey has begun! Keep sharing." },
     { title: "Star", threshold: 1000, badge: "🥉", color: "#CD7F32", desc: "Raise ₹1,000 to earn the bronze Star Intern badge." },
     { title: "Ninja", threshold: 5000, badge: "🥈", color: "#C0C0C0", desc: "Raise ₹5,000 to earn the silver Ninja Intern badge." },
     { title: "Master", threshold: 10000, badge: "🥇", color: "#FFD700", desc: "Raise ₹10,000 to earn the gold Master Intern badge." },

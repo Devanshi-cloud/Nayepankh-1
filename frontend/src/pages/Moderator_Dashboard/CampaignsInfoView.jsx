@@ -76,7 +76,7 @@ const CampaignsInfoView = () => {
                       transition: "box-shadow 0.2s, transform 0.2s",
                       '&:hover': { boxShadow: "0px 12px 32px rgba(33,110,182,0.15)", transform: "translateY(-4px)" },
                       bgcolor: 'background.paper',
-                      borderTop: `8px solid ${isLive ? '#43a047' : '#bdbdbd'}`,
+                      borderTop: `8px solid ${isLive ? '#216EB6' : '#bdbdbd'}`,
                     }}
                   >
                     <CardContent sx={{ p: 3, pt: 5 }}>

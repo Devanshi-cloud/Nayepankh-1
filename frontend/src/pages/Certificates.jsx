@@ -21,7 +21,7 @@ import Footer from "./Footer";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#2ECC71", // Emerald Green
+      main: "#216EB6", // Deep Blue
     },
     secondary: {
       main: "#F1C40F", // Sunflower Yellow
@@ -148,8 +148,8 @@ function Certificates() {
               width: "100%",
               height: "100%",
               background: `
-                radial-gradient(circle at 20% 30%, rgba(46, 204, 113, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(241, 196, 15, 0.1) 0%, transparent 50%)
+                radial-gradient(circle at 20% 30%, rgba(33, 110, 182, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(66, 165, 245, 0.1) 0%, transparent 50%)
               `,
               zIndex: 0,
             }}
