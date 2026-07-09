@@ -533,12 +533,14 @@ const DashboardPage = () => {
                           display: "inline-block",
                           fontWeight: "bold",
                           fontSize: "1.5rem",
-                          color: "primary.main",
+                          color: userDetails.referralCode && userDetails.referralCode !== "N/A" ? "primary.main" : "text.secondary",
                           bgcolor: "#FFF4E6",
                           mb: 2,
+                          minWidth: 120,
+                          textAlign: "center",
                         }}
                       >
-                        {userDetails.referralCode}
+                        {userDetails.referralCode && userDetails.referralCode !== "N/A" ? userDetails.referralCode : "Not available"}
                       </Box>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                         Share your unique code or link. Supporters using it will credit your campaign totals instantly.
@@ -550,6 +552,7 @@ const DashboardPage = () => {
                         variant="contained"
                         startIcon={<ContentCopyIcon />}
                         onClick={handleCopyLink}
+                        disabled={!userDetails.referralCode || userDetails.referralCode === "N/A"}
                         sx={{ py: 1, px: 3, borderRadius: 2, textTransform: "none", fontWeight: "bold" }}
                       >
                         Copy Link
@@ -559,6 +562,7 @@ const DashboardPage = () => {
                         variant="contained"
                         startIcon={<WhatsAppIcon />}
                         onClick={handleShareWhatsAppHero}
+                        disabled={!userDetails.referralCode || userDetails.referralCode === "N/A"}
                         sx={{ py: 1, px: 3, borderRadius: 2, bgcolor: "whatsappGreen.main", "&:hover": { bgcolor: "#20B858" }, textTransform: "none", fontWeight: "bold" }}
                       >
                         Share
