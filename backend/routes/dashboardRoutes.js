@@ -9,7 +9,7 @@ router.get("/", authMiddleware, async (req, res) => {
   try {
     const { data: user, error } = await supabase
       .from("users")
-      .select("id, first_name, last_name, email, role, referral_code, email_verified, phone_verified, avatar")
+      .select("id, first_name, last_name, email, phone, role, referral_code, email_verified, phone_verified, avatar")
       .eq("id", req.user.id)
       .single();
 
@@ -22,6 +22,7 @@ router.get("/", authMiddleware, async (req, res) => {
       firstname: user.first_name,
       lastname: user.last_name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       referralCode: user.referral_code,
       email_verified: user.email_verified,
