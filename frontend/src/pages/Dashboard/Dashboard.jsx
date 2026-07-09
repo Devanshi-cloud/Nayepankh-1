@@ -230,6 +230,11 @@ const DashboardPage = () => {
             referralCode: uData.user.referralCode || "N/A",
             whatsapp: uData.user.phone || "",
           });
+        } else if (uRes.status === 401) {
+          // Token is invalid/expired - clear and redirect to login
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
         }
 
         // Fetch Campaigns

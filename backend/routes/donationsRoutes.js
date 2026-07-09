@@ -66,11 +66,7 @@ router.get("/", authMiddleware, async (req, res) => {
     if (error) throw error;
 
     if (!donations || !donations.length) {
-      return res.status(404).json({
-        msg: req.user.role === "Super Admin" || req.user.role === "Admin"
-          ? "No donations found"
-          : "No donations found for your referral code"
-      });
+      return res.status(200).json({ donations: [], msg: "No donations found" });
     }
 
     // Format response to match frontend expectations
@@ -115,7 +111,7 @@ router.get("/leaderboard", async (req, res) => {
     if (dError) throw dError;
 
     if (!donationRows || !donationRows.length) {
-      return res.status(404).json({ msg: "No donation data available for leaderboard" });
+      return res.status(200).json({ leaderboard: [], msg: "No donation data available for leaderboard" });
     }
 
     // Step 2: Aggregate totals by referral_code in JS
