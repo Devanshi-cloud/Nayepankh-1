@@ -6,8 +6,7 @@ import { ErrorBoundary } from "react-error-boundary";
 // Loading Screen
 import LoadingScreen from "./components/LoadingScreen";
 
-// Welcome Prompt
-import WelcomePrompt from "./components/WelcomePrompt";
+
 
 // Landing Page Components
 import Home from "./pages/Home";
@@ -63,7 +62,6 @@ function LandingLayout() {
     <ThemeProvider theme={landingTheme}>
       <CssBaseline />
       <Navbar />
-      <WelcomePrompt />
       <Outlet />
     </ThemeProvider>
   );

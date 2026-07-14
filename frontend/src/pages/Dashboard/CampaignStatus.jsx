@@ -106,9 +106,7 @@ const CampaignStatus = () => {
         if (response.ok) {
           const validCampaigns = data.campaigns || [];
           setCampaigns(
-            validCampaigns.filter(
-              (c) => c && c._id && c.user && c.user.referralCode
-            )
+            validCampaigns.filter((c) => c && c._id)
           );
         } else {
           setError(data.msg || "Failed to load campaigns");
