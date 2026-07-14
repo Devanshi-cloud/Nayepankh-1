@@ -89,7 +89,27 @@ FOR EACH ROW
 WHEN (OLD.payment_status IS DISTINCT FROM 'completed' AND NEW.payment_status = 'completed')
 EXECUTE FUNCTION update_campaign_totals();
 
--- 7. Insert default mock campaigns
+-- 7. Create Subscriptions Table (for Autopay/Recurring)
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    razorpay_subscription_id VARCHAR(100) UNIQUE NOT NULL,
+    razorpay_plan_id VARCHAR(100) NOT NULL,
+    donor_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    campaign_id UUID REFERENCES campaigns(id) ON DELETE SET NULL,
+    referral_code VARCHAR(20) REFERENCES users(referral_code) ON DELETE SET NULL,
+    amount NUMERIC(12, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'created', -- 'created', 'authenticated', 'active', 'paused', 'completed', 'cancelled', 'expired'
+    total_count INTEGER DEFAULT 12,
+    paid_count INTEGER DEFAULT 0,
+    current_start TIMESTAMP WITH TIME ZONE,
+    current_end TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. Insert default mock campaigns
 INSERT INTO campaigns (title, description, goal_amount, raised_amount, start_date, end_date)
 VALUES 
 ('Empower Girls Education', 'Provide school supplies, books, and uniforms to underprivileged girls in rural communities.', 150000.00, 45000.00, '2026-06-01', '2026-08-31'),

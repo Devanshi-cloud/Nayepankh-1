@@ -224,4 +224,204 @@ router.post("/verify", async (req, res) => {
   }
 });
 
+// ===== SUBSCRIPTION (AUTOPAY) ROUTES =====
+
+// POST /api/donate/create-subscription - Create a Razorpay subscription (Autopay)
+router.post("/create-subscription", async (req, res) => {
+  const {
+    donorName, email, phoneNumber, campaignId, referralCode,
+    planId, totalCount
+  } = req.body;
+
+  // Validate required fields
+  const missing = [];
+  if (!donorName) missing.push("donorName");
+  if (!email) missing.push("email");
+  if (!phoneNumber) missing.push("phoneNumber");
+  if (!planId) missing.push("planId");
+  if (missing.length) {
+    return res.status(400).json({ msg: "Missing required fields", missing });
+  }
+
+  try {
+    // Optional: verify campaign exists
+    if (campaignId) {
+      const { data: campaign, error } = await supabase
+        .from("campaigns")
+        .select("id")
+        .eq("id", campaignId)
+        .maybeSingle();
+      if (error || !campaign) {
+        return res.status(404).json({ msg: "Campaign not found" });
+      }
+    }
+
+    // Optional: verify referral code
+    if (referralCode) {
+      const { data: donorUser, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("referral_code", referralCode)
+        .maybeSingle();
+      if (error || !donorUser) {
+        return res.status(400).json({ msg: "Invalid referral code" });
+      }
+    }
+
+    // Use provided planId, fall back to env, then use dummy
+    const effectivePlanId = planId || process.env.RAZORPAY_PLAN_ID || "plan_Qwerty12345";
+
+    // Create subscription in Razorpay
+    const subscription = await razorpay.subscriptions.create({
+      plan_id: effectivePlanId,
+      customer_notify: 1,
+      total_count: totalCount || 12,
+      notify_info: {
+        notify_email: email,
+        notify_phone: phoneNumber
+      },
+      notes: {
+        donor_name: donorName,
+        campaign_id: campaignId || '',
+        referral_code: referralCode || ''
+      }
+    });
+
+    // Get plan details to figure out the amount
+    let amount = 0;
+    try {
+      const plan = await razorpay.plans.fetch(planId);
+      amount = plan.item.amount;
+    } catch (planErr) {
+      console.warn("Could not fetch plan details:", planErr.message);
+    }
+
+    // Save subscription to database
+    const { data: newSubscription, error: insertError } = await supabase
+      .from("subscriptions")
+      .insert({
+        razorpay_subscription_id: subscription.id,
+        razorpay_plan_id: planId,
+        donor_name: donorName,
+        email,
+        phone: phoneNumber,
+        campaign_id: campaignId || null,
+        referral_code: referralCode || null,
+        amount: amount / 100, // Convert paise to INR
+        status: subscription.status,
+        total_count: totalCount || 12,
+        paid_count: 0
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error saving subscription to DB:", insertError);
+      // Still return subscription ID even if DB save fails
+    }
+
+    res.status(200).json({
+      subscriptionId: subscription.id,
+      amount: amount,
+      msg: "Subscription created successfully"
+    });
+  } catch (err) {
+    console.error("Error creating subscription:", err);
+    res.status(500).json({ msg: "Error creating subscription", error: err.message });
+  }
+});
+
+// GET /api/donate/subscriptions - Fetch subscriptions by email or phone
+router.get("/subscriptions", async (req, res) => {
+  const { email, phone } = req.query;
+
+  if (!email && !phone) {
+    return res.status(400).json({ msg: "Provide email or phone to fetch subscriptions" });
+  }
+
+  try {
+    let query = supabase
+      .from("subscriptions")
+      .select(`
+        id,
+        razorpay_subscription_id,
+        razorpay_plan_id,
+        donor_name,
+        email,
+        phone,
+        amount,
+        status,
+        total_count,
+        paid_count,
+        current_start,
+        current_end,
+        created_at,
+        campaign:campaign_id ( title, description )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (email) query = query.eq("email", email);
+    if (phone) query = query.eq("phone", phone);
+
+    const { data: subscriptions, error } = await query;
+    if (error) throw error;
+
+    const formattedSubscriptions = (subscriptions || []).map(sub => ({
+      _id: sub.id,
+      subscriptionId: sub.razorpay_subscription_id,
+      planId: sub.razorpay_plan_id,
+      donorName: sub.donor_name,
+      email: sub.email,
+      phone: sub.phone,
+      amount: sub.amount,
+      status: sub.status,
+      totalCount: sub.total_count,
+      paidCount: sub.paid_count,
+      currentStart: sub.current_start,
+      currentEnd: sub.current_end,
+      createdAt: sub.created_at,
+      campaign: sub.campaign || null
+    }));
+
+    res.status(200).json({ subscriptions: formattedSubscriptions });
+  } catch (err) {
+    console.error("Error fetching subscriptions:", err);
+    res.status(500).json({ msg: "Error fetching subscriptions", error: err.message });
+  }
+});
+
+// POST /api/donate/cancel-subscription - Cancel a subscription
+router.post("/cancel-subscription", async (req, res) => {
+  const { subscriptionId } = req.body;
+
+  if (!subscriptionId) {
+    return res.status(400).json({ msg: "Missing subscriptionId" });
+  }
+
+  try {
+    // Cancel at Razorpay
+    const cancelled = await razorpay.subscriptions.cancel(subscriptionId);
+
+    // Update local database
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .update({
+        status: "cancelled",
+        updated_at: new Date().toISOString()
+      })
+      .eq("razorpay_subscription_id", subscriptionId)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error updating subscription in DB:", error);
+    }
+
+    res.status(200).json({ msg: "Subscription cancelled successfully", status: cancelled.status });
+  } catch (err) {
+    console.error("Error cancelling subscription:", err);
+    res.status(500).json({ msg: "Error cancelling subscription", error: err.message });
+  }
+});
+
 module.exports = router;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom"; // Import useSearchParams
+import { useSearchParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -16,11 +16,18 @@ import {
   Skeleton,
   InputAdornment,
   Snackbar,
+  ToggleButtonGroup,
+  ToggleButton,
+  Divider,
+  Chip,
+  CircularProgress,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import donationBg from "../assets/welcome-img.webp"; // Adjust path
-import razorpayLogo from "../assets/pow-razorpay.png"; // Adjust path
-import Footer from "./Footer"; // Adjust path
+import { RepeatOneOutlined, VolunteerActivismOutlined, AutoAwesomeOutlined } from "@mui/icons-material";
+import donationBg from "../assets/welcome-img.webp";
+import razorpayLogo from "../assets/pow-razorpay.png";
+import donationSectionImg from "../assets/donation-section-img.jpg";
+import Footer from "./Footer";
 import MuiAlert from '@mui/material/Alert';
 import { buildApiUrl } from "../constants";
 
@@ -39,26 +46,42 @@ const theme = createTheme({
   },
 });
 
+// Default subscription plan amounts (in INR per month)
+const SUBSCRIPTION_PLANS = [
+  { label: "Starter", amount: 250, badge: "🌱" },
+  { label: "Supporter", amount: 500, badge: "🤝" },
+  { label: "Champion", amount: 1000, badge: "🏆" },
+  { label: "Guardian", amount: 2500, badge: "🛡️" },
+];
+
 function Donation() {
-  const [searchParams] = useSearchParams(); // Hook to get URL query params
-  const initialReferralCode = searchParams.get("ref") || ""; // Get referral code from URL
+  const [searchParams] = useSearchParams();
+  const initialReferralCode = searchParams.get("ref") || "";
   const [timedCampaigns, setTimedCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [selectedCardInfo, setSelectedCardInfo] = useState(null);
+  const [isSubscription, setIsSubscription] = useState(false);
+  const [selectedSubPlan, setSelectedSubPlan] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phoneNumber: "",
     amount: "",
-    referralCode: initialReferralCode, // Initialize with URL referral code
+    subscriptionAmount: "500",
+    referralCode: initialReferralCode,
   });
   const [errors, setErrors] = useState({});
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [flippedCards, setFlippedCards] = useState({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [showSubscriptions, setShowSubscriptions] = useState(false);
+  const [userSubscriptions, setUserSubscriptions] = useState([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -99,14 +122,6 @@ function Donation() {
     fetchCampaigns();
   }, []);
 
-  const staticCampaign = {
-    title: "Support Underprivileged Children",
-    description:
-      "Help us provide education, healthcare, and basic necessities to children in need across rural communities.",
-    goalAmount: 500000,
-    raisedAmount: 120000,
-  };
-
   const staticDonations = [
     { title: "Education Pack", description: "Fund books and uniforms for 10 kids.", amount: 5000 },
     { title: "Health Kit", description: "Provide medical checkups for 5 families.", amount: 1500 },
@@ -120,10 +135,12 @@ function Donation() {
   const handleDonateClick = (campaign = null, presetAmount = null, cardInfo = null) => {
     setSelectedCampaign(campaign);
     setSelectedCardInfo(cardInfo);
+    setIsSubscription(false);
+    setSelectedSubPlan(null);
     setFormData((prev) => ({
       ...prev,
-      amount: presetAmount ? presetAmount.toString() : prev.amount, // Use presetAmount or keep current amount
-      referralCode: initialReferralCode || prev.referralCode, // Apply URL referral code
+      amount: presetAmount ? presetAmount.toString() : prev.amount,
+      referralCode: initialReferralCode || prev.referralCode,
     }));
     setOpenDialog(true);
     setErrors({});
@@ -143,12 +160,153 @@ function Donation() {
     if (name === "phoneNumber") {
       formattedValue = value.replace(/\D/g, "").slice(0, 10);
     } else if (name === "amount") {
-      formattedValue = value.replace(/\D/g, ""); // Only allow numbers
+      formattedValue = value.replace(/\D/g, "");
     }
     setFormData((prev) => ({ ...prev, [name]: formattedValue }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const handlePaymentModeChange = (event, newMode) => {
+    if (newMode !== null) {
+      setIsSubscription(newMode === "subscription");
+      if (newMode === "subscription" && !selectedSubPlan) {
+        setSelectedSubPlan(SUBSCRIPTION_PLANS[1]); // Default to "Supporter"
+        setFormData((prev) => ({ ...prev, subscriptionAmount: "500" }));
+      }
+    }
+  };
+
+  // === ONE-TIME DONATION HANDLER ===
+  const handleOneTimeDonate = async (amountInINR) => {
+    const amountInPaise = Math.round(amountInINR * 100);
+
+    const response = await fetch(buildApiUrl("/api/donate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        donorName: formData.fullName,
+        amount: amountInPaise,
+        campaignId: selectedCampaign?._id || null,
+        referralCode: formData.referralCode || null,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        campaignDetails: !selectedCampaign && selectedCardInfo ? {
+          title: selectedCardInfo.title,
+          description: selectedCardInfo.description,
+          goalAmount: null,
+        } : undefined,
+      }),
+    });
+    const orderData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(orderData.msg || "Failed to create donation order");
+    }
+
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: "rzp_test_TBNBuPaPRaIZWu",
+        amount: orderData.amount,
+        currency: "INR",
+        name: "NayePankh",
+        description: `Donation to ${selectedCampaign?.title || "NayePankh Foundation"}`,
+        order_id: orderData.orderId,
+        handler: async (paymentResponse) => {
+          try {
+            const verifyRes = await fetch(buildApiUrl("/api/donate/verify"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+                donorName: formData.fullName,
+                amount: amountInPaise,
+                campaignId: selectedCampaign?._id || null,
+                referralCode: formData.referralCode || null,
+                email: formData.email,
+                phoneNumber: formData.phoneNumber,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              resolve();
+            } else {
+              reject(new Error(verifyData.msg || "Payment verification failed"));
+            }
+          } catch (err) {
+            reject(err);
+          }
+        },
+        modal: {
+          ondismiss: () => reject(new Error("Payment cancelled by user")),
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: `+91${formData.phoneNumber}`,
+        },
+        theme: { color: "#216EB6" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  };
+
+  // === SUBSCRIPTION HANDLER ===
+  const handleSubscriptionDonate = async (amountInINR) => {
+    // For subscriptions, we use a plan-based approach.
+    // The PLAN_ID needs to be set up in Razorpay dashboard.
+    // We create a subscription and then open the Razorpay checkout.
+    const response = await fetch(buildApiUrl("/api/donate/create-subscription"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        donorName: formData.fullName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        campaignId: selectedCampaign?._id || null,
+        referralCode: formData.referralCode || null,
+        planId: import.meta.env.VITE_RAZORPAY_PLAN_ID || "plan_Qwerty12345",
+        totalCount: 12,
+      }),
+    });
+    const subData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(subData.msg || "Failed to create subscription");
+    }
+
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: "rzp_test_TBNBuPaPRaIZWu",
+        name: "NayePankh",
+        description: `Monthly Subscription - ${selectedCampaign?.title || "NayePankh Foundation"}`,
+        subscription_id: subData.subscriptionId,
+        handler: async (paymentResponse) => {
+          // Subscription was successfully created and first payment captured
+          setSnackbarMessage(`🎉 Monthly subscription started! You'll be charged ₹${amountInINR.toLocaleString()}/month.`);
+          setSnackbarSeverity("success");
+          resolve();
+        },
+        modal: {
+          ondismiss: () => reject(new Error("Subscription cancelled by user")),
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: `+91${formData.phoneNumber}`,
+        },
+        theme: { color: "#216EB6" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    });
+  };
+
+  // === MAIN DONATE HANDLER ===
   const handleDonate = async (e) => {
     e.preventDefault();
 
@@ -161,9 +319,17 @@ function Donation() {
       newErrors.phoneNumber = "Phone Number is required";
     else if (!/^[6-9]\d{9}$/.test(formData.phoneNumber))
       newErrors.phoneNumber = "Invalid 10-digit phone number (start with 6-9)";
-    const amountInINR = parseFloat(formData.amount);
-    if (!formData.amount || isNaN(amountInINR) || amountInINR <= 0)
-      newErrors.amount = "Enter a valid amount greater than 0";
+
+    const amountInINR = parseFloat(
+      isSubscription ? formData.subscriptionAmount : formData.amount
+    );
+    if (!isSubscription) {
+      if (!formData.amount || isNaN(amountInINR) || amountInINR <= 0)
+        newErrors.amount = "Enter a valid amount greater than 0";
+    } else {
+      if (!selectedSubPlan)
+        newErrors.subscriptionAmount = "Please select a subscription plan";
+    }
     if (formData.referralCode && !/^[A-Za-z0-9]+$/.test(formData.referralCode))
       newErrors.referralCode = "Referral code must be alphanumeric";
 
@@ -177,85 +343,41 @@ function Donation() {
       return;
     }
 
+    setProcessingPayment(true);
     try {
-      const amountInPaise = Math.round(amountInINR * 100);
-      const response = await fetch(buildApiUrl("/api/donate"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          donorName: formData.fullName,
-          amount: amountInPaise,
-          campaignId: selectedCampaign?._id || null,
-          referralCode: formData.referralCode || null,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-          campaignDetails: !selectedCampaign && selectedCardInfo ? {
-            title: selectedCardInfo.title,
-            description: selectedCardInfo.description,
-            goalAmount: null,
-          } : undefined,
-        }),
-      });
-      const orderData = await response.json();
-
-      if (!response.ok) {
-        setErrors({ general: orderData.msg || "Failed to create donation order" });
-        return;
+      if (isSubscription) {
+        await handleSubscriptionDonate(amountInINR);
+      } else {
+        await handleOneTimeDonate(amountInINR);
       }
 
-      const options = {
-        key: "rzp_test_TBNBuPaPRaIZWu",
-        amount: orderData.amount,
-        currency: "INR",
-        name: "NayePankh",
-        description: `Donation to ${selectedCampaign?.title || "Custom Donation"}`,
-        order_id: orderData.orderId,
-        handler: async (response) => {
-          const verifyResponse = await fetch(buildApiUrl("/api/donate/verify"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              donorName: formData.fullName,
-              amount: amountInPaise,
-              campaignId: selectedCampaign?._id || null,
-              referralCode: formData.referralCode || null,
-              email: formData.email,
-              phoneNumber: formData.phoneNumber,
-            }),
-          });
-          const verifyData = await verifyResponse.json();
-
-          if (verifyResponse.ok) {
-            setFormData({
-              fullName: "",
-              email: "",
-              phoneNumber: "",
-              amount: "",
-              referralCode: initialReferralCode, // Retain URL referral code after donation
-            });
-            setOpenDialog(false);
-            setSnackbarMessage("Thank you for your donation!");
-            setSnackbarOpen(true);
-          } else {
-            setErrors({ general: verifyData.msg || "Payment verification failed" });
-          }
-        },
-        prefill: {
-          name: formData.fullName,
-          email: formData.email,
-          contact: `+91${formData.phoneNumber}`,
-        },
-        theme: { color: "#216EB6" },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      // Success - reset form
+      setFormData({
+        fullName: "",
+        email: "",
+        phoneNumber: "",
+        amount: "",
+        subscriptionAmount: "500",
+        referralCode: initialReferralCode,
+      });
+      setOpenDialog(false);
+      setSelectedCampaign(null);
+      setSelectedCardInfo(null);
+      setSelectedSubPlan(null);
+      setIsSubscription(false);
+      setSnackbarMessage(
+        isSubscription
+          ? "🎉 Monthly subscription started successfully! Thank you for your ongoing support!"
+          : "Thank you for your donation! ❤️"
+      );
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (err) {
-      setErrors({ general: "Failed to process donation. Please try again." });
-      console.error(err);
+      if (err.message !== "Payment cancelled by user" && err.message !== "Subscription cancelled by user") {
+        setErrors({ general: err.message || "Failed to process payment. Please try again." });
+      }
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -266,11 +388,14 @@ function Donation() {
       email: "",
       phoneNumber: "",
       amount: "",
-      referralCode: initialReferralCode, // Retain URL referral code on dialog close
+      subscriptionAmount: "500",
+      referralCode: initialReferralCode,
     });
     setErrors({});
     setSelectedCampaign(null);
     setSelectedCardInfo(null);
+    setIsSubscription(false);
+    setSelectedSubPlan(null);
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -281,6 +406,70 @@ function Donation() {
   const handleDonateAgain = () => {
     setSnackbarOpen(false);
     setOpenDialog(true);
+  };
+
+  // === VIEW MY SUBSCRIPTIONS ===
+  const handleViewSubscriptions = async () => {
+    if (!formData.email && !formData.phoneNumber) {
+      setErrors({ general: "Please enter email or phone to view subscriptions" });
+      return;
+    }
+    setSubscriptionsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (formData.email) params.append("email", formData.email);
+      if (formData.phoneNumber) params.append("phone", formData.phoneNumber);
+
+      const response = await fetch(
+        buildApiUrl(`/api/donate/subscriptions?${params.toString()}`)
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setUserSubscriptions(data.subscriptions || []);
+        setShowSubscriptions(true);
+      } else {
+        setErrors({ general: data.msg || "Failed to fetch subscriptions" });
+      }
+    } catch (err) {
+      setErrors({ general: "Failed to fetch subscriptions" });
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  };
+
+  // === CANCEL SUBSCRIPTION ===
+  const handleCancelSubscription = async (subscriptionId) => {
+    try {
+      const response = await fetch(buildApiUrl("/api/donate/cancel-subscription"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscriptionId }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSnackbarMessage("Subscription cancelled successfully");
+        setSnackbarSeverity("info");
+        setSnackbarOpen(true);
+        handleViewSubscriptions(); // Refresh
+      } else {
+        setErrors({ general: data.msg || "Failed to cancel subscription" });
+      }
+    } catch (err) {
+      setErrors({ general: "Failed to cancel subscription" });
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      active: "#4CAF50",
+      created: "#2196F3",
+      authenticated: "#FF9800",
+      completed: "#9E9E9E",
+      cancelled: "#F44336",
+      paused: "#FFC107",
+      expired: "#9E9E9E",
+    };
+    return colors[status] || "#9E9E9E";
   };
 
   return (
@@ -334,17 +523,18 @@ function Donation() {
           </Typography>
         </Box>
 
-        {/* Choose a Donation Amount Section - Moved to top */}
+        {/* Main Content */}
         <Box sx={{ py: { xs: 4, md: 6 }, bgcolor: "#F7F9FC", position: "relative", zIndex: 1 }}>
           <Container maxWidth="lg">
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                textAlign: "center", 
-                color: "primary.main", 
+            {/* Choose a Donation Amount */}
+            <Typography
+              variant="h4"
+              sx={{
+                textAlign: "center",
+                color: "primary.main",
                 mb: 4,
                 fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-                fontWeight: 700
+                fontWeight: 700,
               }}
             >
               Choose a Donation Amount
@@ -404,31 +594,31 @@ function Donation() {
                           gap: { xs: 0.5, sm: 1 },
                         }}
                       >
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
-                            color: "primary.main", 
-                            fontWeight: 700, 
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: "primary.main",
+                            fontWeight: 700,
                             mb: 0.5,
                             fontSize: { xs: "0.95rem", sm: "1.05rem", md: "1.1rem" }
                           }}
                         >
                           {donation.title}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            color: "text.primary", 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.primary",
                             mb: 0.5,
                             fontSize: { xs: "0.8rem", sm: "0.9rem", md: "0.95rem" }
                           }}
                         >
                           {donation.description}
                         </Typography>
-                        <Typography 
-                          variant="body1" 
-                          sx={{ 
-                            color: "secondary.main", 
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: "secondary.main",
                             fontWeight: 600,
                             fontSize: { xs: "0.9rem", sm: "1rem", md: "1.05rem" }
                           }}
@@ -455,10 +645,10 @@ function Donation() {
                           variant="contained"
                           color="secondary"
                           onClick={() => handleDonateClick(null, donation.amount, donation)}
-                          sx={{ 
-                            py: { xs: 1, sm: 1.1 }, 
+                          sx={{
+                            py: { xs: 1, sm: 1.1 },
                             px: { xs: 2, sm: 2.2 },
-                            fontWeight: "bold", 
+                            fontWeight: "bold",
                             "&:hover": { bgcolor: "#F39C12" },
                             fontSize: { xs: "0.85rem", sm: "0.95rem" }
                           }}
@@ -472,23 +662,23 @@ function Donation() {
               ))}
             </Grid>
 
-            {/* Custom Donation Input - Moved below Choose a Donation Amount */}
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                textAlign: "center", 
-                color: "primary.main", 
-                mt: { xs: 6, md: 8 }, 
+            {/* Custom Donation Input */}
+            <Typography
+              variant="h4"
+              sx={{
+                textAlign: "center",
+                color: "primary.main",
+                mt: { xs: 6, md: 8 },
                 mb: 4,
                 fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-                fontWeight: 700
+                fontWeight: 700,
               }}
             >
               Make a Custom Donation
             </Typography>
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "center", 
+            <Box sx={{
+              display: "flex",
+              justifyContent: "center",
               mb: 6,
               px: { xs: 2, sm: 3, md: 4 }
             }}>
@@ -547,7 +737,7 @@ function Donation() {
               </Box>
             </Box>
 
-            {/* Together, Let's Make a Difference Section - Moved below Custom Donation */}
+            {/* Together, Let's Make a Difference */}
             <Typography
               variant="h3"
               component="h2"
@@ -598,7 +788,7 @@ function Donation() {
               Founder & President, NayePankh Foundation
             </Typography>
 
-            {/* Timed Campaigns */}
+            {/* Ongoing Campaigns Section */}
             <Typography variant="h4" sx={{ textAlign: "center", color: "primary.main", mt: 8, mb: 4 }}>
               Support our Ongoing Campaigns
             </Typography>
@@ -652,7 +842,7 @@ function Donation() {
                   ))}
             </Grid>
 
-            {/* Original Donate Now Button */}
+            {/* Donate Now Button */}
             <Box sx={{ textAlign: "center", mt: 6, mb: 6 }}>
               <Typography variant="h5" sx={{ color: "primary.main", fontWeight: 700, mb: 2 }}>
                 Donate Now
@@ -719,16 +909,86 @@ function Donation() {
           </Grid>
         </Box>
 
-        {/* Donation Dialog */}
+        {/* ===== DONATION DIALOG with Image & Subscription Toggle ===== */}
         <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ bgcolor: "primary.main", color: "white", textAlign: "center" }}>
-            Donate to {selectedCampaign?.title || "General Fund"}
-          </DialogTitle>
-          <DialogContent sx={{ p: 3 }}>
+          {/* Image Banner at Top of Dialog */}
+          <Box
+            sx={{
+              position: "relative",
+              height: { xs: 140, sm: 180 },
+              backgroundImage: `url(${donationSectionImg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "linear-gradient(to bottom, rgba(33,110,182,0.7), rgba(33,110,182,0.3))",
+              }}
+            />
+            <Box sx={{ position: "relative", textAlign: "center", px: 2 }}>
+              <Typography
+                variant="h5"
+                sx={{ color: "#fff", fontWeight: 800, textShadow: "2px 2px 8px rgba(0,0,0,0.5)" }}
+              >
+                {selectedCampaign?.title || "Support NayePankh Foundation"}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.9)", mt: 0.5 }}>
+                Every contribution creates a ripple of change
+              </Typography>
+            </Box>
+          </Box>
+
+          <DialogContent sx={{ p: 3, pt: 2 }}>
+            {/* Payment Mode Toggle */}
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+              <ToggleButtonGroup
+                value={isSubscription ? "subscription" : "one-time"}
+                exclusive
+                onChange={handlePaymentModeChange}
+                size="small"
+                sx={{
+                  "& .MuiToggleButton-root": {
+                    px: 3,
+                    py: 1,
+                    borderRadius: "20px !important",
+                    border: "1px solid #216EB6 !important",
+                    mx: 0.5,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    "&.Mui-selected": {
+                      bgcolor: "#216EB6",
+                      color: "#fff",
+                      "&:hover": { bgcolor: "#1a5a9e" },
+                    },
+                  },
+                }}
+              >
+                <ToggleButton value="one-time">
+                  <VolunteerActivismOutlined sx={{ mr: 0.5, fontSize: 18 }} />
+                  One-Time
+                </ToggleButton>
+                <ToggleButton value="subscription">
+                  <RepeatOneOutlined sx={{ mr: 0.5, fontSize: 18 }} />
+                  Monthly
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              {/* Personal Info Fields */}
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Full Name"
                   name="fullName"
                   value={formData.fullName}
@@ -738,9 +998,10 @@ function Donation() {
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Email"
                   name="email"
                   value={formData.email}
@@ -750,9 +1011,10 @@ function Donation() {
                   required
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Phone Number"
                   name="phoneNumber"
                   value={formData.phoneNumber}
@@ -760,11 +1022,19 @@ function Donation() {
                   error={!!errors.phoneNumber}
                   helperText={errors.phoneNumber}
                   required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Typography sx={{ color: "text.secondary", fontWeight: 500, fontSize: "0.85rem" }}>+91</Typography>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   label="Referral Code (Optional)"
                   name="referralCode"
                   value={formData.referralCode}
@@ -773,39 +1043,213 @@ function Donation() {
                   helperText={errors.referralCode}
                 />
               </Grid>
+
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Amount (INR)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  error={!!errors.amount}
-                  helperText={errors.amount}
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Typography sx={{ color: "text.primary", fontWeight: 700 }}>₹</Typography>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                <Divider sx={{ my: 0.5 }} />
               </Grid>
+
+              {/* One-Time Amount Field */}
+              {!isSubscription && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Amount (INR)"
+                    name="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    error={!!errors.amount}
+                    helperText={errors.amount}
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography sx={{ color: "text.primary", fontWeight: 700 }}>₹</Typography>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              )}
+
+              {/* Subscription Plan Selection */}
+              {isSubscription && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "text.secondary", mb: 1.5 }}>
+                    Choose Your Monthly Subscription Plan:
+                  </Typography>
+                  <Grid container spacing={1}>
+                    {SUBSCRIPTION_PLANS.map((plan) => (
+                      <Grid item xs={6} key={plan.amount}>
+                        <Card
+                          onClick={() => {
+                            setSelectedSubPlan(plan);
+                            setFormData((prev) => ({ ...prev, subscriptionAmount: plan.amount.toString() }));
+                          }}
+                          sx={{
+                            cursor: "pointer",
+                            border: selectedSubPlan?.amount === plan.amount
+                              ? "2px solid #216EB6"
+                              : "2px solid transparent",
+                            bgcolor: selectedSubPlan?.amount === plan.amount
+                              ? "rgba(33,110,182,0.06)"
+                              : "#fff",
+                            borderRadius: 2,
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              borderColor: "#216EB6",
+                              bgcolor: "rgba(33,110,182,0.04)",
+                            },
+                            p: 1.5,
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                            <Typography variant="body1" sx={{ fontSize: "1.2rem" }}>{plan.badge}</Typography>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "primary.main" }}>
+                              {plan.label}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: "#34495E" }}>
+                            ₹{plan.amount.toLocaleString()}<Typography component="span" variant="caption" sx={{ color: "text.secondary", fontWeight: 400 }}>/month</Typography>
+                          </Typography>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                  <Chip
+                    icon={<AutoAwesomeOutlined sx={{ fontSize: 16 }} />}
+                    label="Cancel anytime. First payment charged now."
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    sx={{ mt: 1.5, fontWeight: 500, borderRadius: 1 }}
+                  />
+                </Grid>
+              )}
+
+              {/* General Error */}
               {errors.general && (
                 <Grid item xs={12}>
-                  <Typography color="error">{errors.general}</Typography>
+                  <Typography color="error" variant="body2" sx={{ textAlign: "center" }}>
+                    {errors.general}
+                  </Typography>
                 </Grid>
               )}
             </Grid>
           </DialogContent>
+
+          <DialogActions sx={{ justifyContent: "space-between", p: 2, pt: 0 }}>
+            <Box>
+              {isSubscription && (
+                <Button
+                  size="small"
+                  variant="text"
+                  color="info"
+                  onClick={handleViewSubscriptions}
+                  disabled={subscriptionsLoading}
+                  sx={{ textTransform: "none", fontWeight: 500 }}
+                >
+                  {subscriptionsLoading ? <CircularProgress size={16} sx={{ mr: 0.5 }} /> : null}
+                  My Subscriptions
+                </Button>
+              )}
+            </Box>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button onClick={handleCloseDialog} color="primary" variant="outlined" sx={{ borderRadius: 2, textTransform: "none" }}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDonate}
+                variant="contained"
+                color="secondary"
+                disabled={processingPayment}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  px: 3,
+                  "&:hover": { bgcolor: "#F39C12" },
+                }}
+              >
+                {processingPayment ? (
+                  <CircularProgress size={20} sx={{ color: "#34495E", mr: 1 }} />
+                ) : isSubscription ? (
+                  <RepeatOneOutlined sx={{ mr: 0.5, fontSize: 18 }} />
+                ) : (
+                  <VolunteerActivismOutlined sx={{ mr: 0.5, fontSize: 18 }} />
+                )}
+                {processingPayment
+                  ? "Processing..."
+                  : isSubscription
+                  ? `Subscribe ₹${(parseFloat(formData.subscriptionAmount) || 0).toLocaleString()}/mo`
+                  : `Donate ₹${(parseFloat(formData.amount) || 0).toLocaleString()}`}
+              </Button>
+            </Box>
+          </DialogActions>
+        </Dialog>
+
+        {/* Subscriptions List Dialog */}
+        <Dialog open={showSubscriptions} onClose={() => setShowSubscriptions(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ bgcolor: "primary.main", color: "white", textAlign: "center" }}>
+            <RepeatOneOutlined sx={{ mr: 1, verticalAlign: "middle" }} />
+            Your Subscriptions
+          </DialogTitle>
+          <DialogContent sx={{ p: 3 }}>
+            {userSubscriptions.length === 0 ? (
+              <Typography sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                No subscriptions found for this email/phone.
+              </Typography>
+            ) : (
+              <Grid container spacing={2}>
+                {userSubscriptions.map((sub) => (
+                  <Grid item xs={12} key={sub._id}>
+                    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            ₹{sub.amount?.toLocaleString()}/month
+                          </Typography>
+                          <Chip
+                            label={sub.status}
+                            size="small"
+                            sx={{
+                              bgcolor: getStatusColor(sub.status),
+                              color: "#fff",
+                              fontWeight: 600,
+                              textTransform: "capitalize",
+                            }}
+                          />
+                        </Box>
+                        {sub.campaign && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                            Campaign: {sub.campaign.title}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                          Started: {new Date(sub.createdAt).toLocaleDateString()} • Paid: {sub.paidCount}/{sub.totalCount}
+                        </Typography>
+                        {(sub.status === "active" || sub.status === "created" || sub.status === "authenticated") && (
+                          <Button
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                            onClick={() => handleCancelSubscription(sub.subscriptionId)}
+                            sx={{ mt: 1, textTransform: "none", fontWeight: 600 }}
+                          >
+                            Cancel Subscription
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </DialogContent>
           <DialogActions sx={{ justifyContent: "center", p: 2 }}>
-            <Button onClick={handleCloseDialog} color="primary">
-              Cancel
-            </Button>
-            <Button onClick={handleDonate} variant="contained" color="secondary">
-              Donate
+            <Button onClick={() => setShowSubscriptions(false)} variant="contained" color="primary" sx={{ borderRadius: 2, textTransform: "none" }}>
+              Close
             </Button>
           </DialogActions>
         </Dialog>
@@ -813,7 +1257,8 @@ function Donation() {
         {/* Footer */}
         <Footer />
       </Box>
-      {/* Thank You Snackbar */}
+
+      {/* Snackbar Notification */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -826,13 +1271,12 @@ function Donation() {
           variant="filled"
           onClose={handleSnackbarClose}
           icon={false}
+          severity={snackbarSeverity}
           sx={{
-            bgcolor: '#216EB6',
             color: '#fff',
             fontWeight: 600,
             fontSize: { xs: '1rem', sm: '1.1rem' },
             boxShadow: '0px 4px 20px rgba(33,110,182,0.15)',
-            border: '2px solid #F1C40F',
             letterSpacing: 0.5,
           }}
           action={
