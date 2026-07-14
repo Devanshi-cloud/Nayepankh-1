@@ -103,7 +103,7 @@ function Transactions() {
                   <TableRow key={donation._id} sx={{ "&:hover": { bgcolor: "rgba(33,110,182,0.05)" } }}>
                     <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>{donation.donorName || "Anonymous"}</TableCell>
                     <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>₹{(donation.amount || 0).toLocaleString()}</TableCell>
-                    <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>{donation.campaign.title}</TableCell>                    
+                    <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>{donation.campaign?.title || "Unknown Campaign"}</TableCell>                    
                     <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>{donation.referralCode || "N/A"}</TableCell>
                     <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>{donation.paymentId || "Unknown"}</TableCell>
                     <TableCell sx={{ fontSize: { xs: "0.7rem", sm: "0.9rem" }, color: "text.primary" }}>{donation.date ? new Date(donation.date).toLocaleString() : "N/A"}</TableCell>
