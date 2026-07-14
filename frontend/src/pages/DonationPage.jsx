@@ -268,7 +268,7 @@ function Donation() {
         phoneNumber: formData.phoneNumber,
         campaignId: selectedCampaign?._id || null,
         referralCode: formData.referralCode || null,
-        planId: import.meta.env.VITE_RAZORPAY_PLAN_ID || "plan_Qwerty12345",
+        planId: import.meta.env[`VITE_RAZORPAY_PLAN_ID_${selectedSubPlan?.label}`] || import.meta.env.VITE_RAZORPAY_PLAN_ID_Starter || "plan_Qwerty12345",
         totalCount: 12,
       }),
     });
