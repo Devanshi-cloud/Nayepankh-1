@@ -21,6 +21,7 @@ import {
   Popover,
   ListItemButton as PopoverListItemButton,
   Divider,
+  Button,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -31,9 +32,11 @@ import {
   MonetizationOn as DonationsIcon,
   NavigateNext as NavigateNextIcon,
   Assignment,
+  Lock as LockIcon,
 } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import bgImg from "../../assets/welcome-img.webp";
 import CreateCampaigns from "./CreateCampaign";
 import InternsList from "./InternsList";
@@ -66,14 +69,43 @@ const SuperAdminDashboard = () => {
     totalDonations: null,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authError, setAuthError] = useState(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
-  const isLoggedIn = !!token;
+
+  // Frontend auth guard: check token and role on mount
+  useEffect(() => {
+    if (!token) {
+      setAuthError("no_token");
+      setAuthChecked(true);
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode(token);
+      // Check token expiration client-side to prevent brief flash of dashboard
+      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+        setAuthError("invalid_token");
+        setAuthChecked(true);
+        return;
+      }
+      if (decoded.role !== "Super Admin") {
+        setAuthError("wrong_role");
+        setAuthChecked(true);
+        return;
+      }
+      setAuthChecked(true);
+    } catch {
+      setAuthError("invalid_token");
+      setAuthChecked(true);
+    }
+  }, [token]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
-      if (!isLoggedIn) return;
+      if (authError) return;
       setIsLoading(true);
       try {
         const response = await fetch(buildApiUrl("/api/auth/user"), {
@@ -100,11 +132,14 @@ const SuperAdminDashboard = () => {
       }
     };
 
-    fetchUserDetails();
-  }, [isLoggedIn]);
+    if (authChecked && !authError) {
+      fetchUserDetails();
+    }
+  }, [authChecked, authError]);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
+      if (authError) return;
       setStatsLoading(true);
       try {
         // Fetch campaigns count
@@ -133,8 +168,10 @@ const SuperAdminDashboard = () => {
         setStatsLoading(false);
       }
     };
-    fetchDashboardStats();
-  }, [token]);
+    if (authChecked && !authError) {
+      fetchDashboardStats();
+    }
+  }, [token, authChecked, authError]);
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
@@ -224,6 +261,65 @@ const SuperAdminDashboard = () => {
       </List>
     </Box>
   );
+
+  // If auth check is pending, show a loading screen
+  if (!authChecked) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", bgcolor: "background.default" }}>
+          <CircularProgress size={48} color="primary" />
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  // If not authorized, show Access Denied screen
+  if (authError) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "background.default",
+            p: 4,
+            textAlign: "center",
+          }}
+        >
+          <LockIcon sx={{ fontSize: 80, color: "#d32f2f", mb: 3 }} />
+          <Typography variant="h4" sx={{ fontWeight: 700, color: "#d32f2f", mb: 2 }}>
+            Access Denied
+          </Typography>
+          <Typography variant="body1" sx={{ color: "text.secondary", mb: 1, maxWidth: 480 }}>
+            {authError === "no_token" && "You are not logged in. Please log in with your Super Admin credentials to access this page."}
+            {authError === "wrong_role" && "You do not have Super Admin privileges. Only Super Admin users can access this dashboard."}
+            {authError === "invalid_token" && "Your session is invalid or expired. Please log in again."}
+          </Typography>
+          <Box sx={{ mt: 3, display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate("/login")}
+              sx={{ px: 4, py: 1.5, fontWeight: 600, borderRadius: 2 }}
+            >
+              Go to Login
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => navigate("/dashboard")}
+              sx={{ px: 4, py: 1.5, fontWeight: 600, borderRadius: 2 }}
+            >
+              Go to Dashboard
+            </Button>
+          </Box>
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
