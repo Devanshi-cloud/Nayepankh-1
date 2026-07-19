@@ -132,7 +132,7 @@ const OngoingCampaigns = () => {
   const handleDeleteConfirm = async () => {
     try {
       const response = await fetch(
-        buildApiUrl("/api/campaign/${campaignToDelete._id}"),
+        buildApiUrl(`/api/campaign/${campaignToDelete._id}`),
         {
           method: "DELETE",
           headers: {
@@ -172,7 +172,7 @@ const OngoingCampaigns = () => {
   const handleUpdateConfirm = async () => {
     try {
       const response = await fetch(
-        buildApiUrl("/api/campaign/${selectedCampaign._id}"),
+        buildApiUrl(`/api/campaign/${selectedCampaign._id}`),
         {
           method: "PUT",
           headers: {
@@ -218,7 +218,7 @@ const OngoingCampaigns = () => {
     }
     try {
       const response = await fetch(
-        buildApiUrl("/api/campaign/${selectedCampaign._id}/extend"),
+        buildApiUrl(`/api/campaign/${selectedCampaign._id}/extend`),
         {
           method: "PUT",
           headers: {

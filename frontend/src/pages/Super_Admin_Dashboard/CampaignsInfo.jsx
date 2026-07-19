@@ -105,7 +105,7 @@ const CampaignsInfo = () => {
     try {
       const method = editMode ? "PUT" : "POST";
       const url = editMode
-        ? buildApiUrl("/api/campaign/${selectedCampaign._id}")
+        ? buildApiUrl(`/api/campaign/${selectedCampaign._id}`)
         : buildApiUrl("/api/campaign");
       const response = await fetch(url, {
         method,
@@ -131,7 +131,7 @@ const CampaignsInfo = () => {
   const handleDelete = async (campaign) => {
     if (!window.confirm("Are you sure you want to delete this campaign?")) return;
     try {
-      const response = await fetch(buildApiUrl("/api/campaign/${campaign._id}"), {
+      const response = await fetch(buildApiUrl(`/api/campaign/${campaign._id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
