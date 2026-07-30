@@ -205,7 +205,7 @@ function Donation() {
 
     return new Promise((resolve, reject) => {
       const options = {
-        key: "rzp_test_TBNBuPaPRaIZWu",
+        key: import.meta.env.VITE_RAZORPAY_API_KEY || "rzp_test_TBNBuPaPRaIZWu",
         amount: orderData.amount,
         currency: "INR",
         name: "NayePankh",
@@ -280,7 +280,7 @@ function Donation() {
 
     return new Promise((resolve, reject) => {
       const options = {
-        key: "rzp_test_TBNBuPaPRaIZWu",
+        key: import.meta.env.VITE_RAZORPAY_API_KEY || "rzp_test_TBNBuPaPRaIZWu",
         name: "NayePankh",
         description: `Monthly Subscription - ${selectedCampaign?.title || "NayePankh Foundation"}`,
         subscription_id: subData.subscriptionId,

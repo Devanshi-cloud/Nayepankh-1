@@ -5,8 +5,8 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_TEST_KEY_ID || "rzp_test_TBNBuPaPRaIZWu",
-  key_secret: process.env.RAZORPAY_TEST_KEY_SECRET,
+  key_id: process.env.RAZORPAY_LIVE_KEY_ID,
+  key_secret: process.env.RAZORPAY_LIVE_KEY_SECRET,
 });
 
 // GET /api/donate/public - Fetch all active campaigns (public access)
@@ -185,14 +185,14 @@ router.post("/verify", async (req, res) => {
   }
 
   try {
-    if (!process.env.RAZORPAY_TEST_KEY_SECRET) {
-      console.error("RAZORPAY_KEY_SECRET is not defined in environment variables");
+    if (!process.env.RAZORPAY_LIVE_KEY_SECRET) {
+      console.error("RAZORPAY_LIVE_KEY_SECRET is not defined in environment variables");
       return res.status(500).json({ msg: "Server configuration error: Payment secret key missing" });
     }
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_TEST_KEY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_LIVE_KEY_SECRET)
       .update(body.toString())
       .digest("hex");
 

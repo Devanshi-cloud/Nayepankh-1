@@ -71,7 +71,7 @@ app.get("/", (req, res) => {
 module.exports = app;
 
 if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5001;
   app.listen(PORT, () => {
     console.log(`🚀 Server is listening locally on port ${PORT}`);
   });

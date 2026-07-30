@@ -14,7 +14,7 @@ export const buildApiUrl = (path) => {
   // 2. Dynamic environment detection for local development
   const { hostname } = window.location;
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return `http://localhost:5000${path}`;
+    return `http://localhost:5001${path}`;
   }
 
   // 3. Fallback to the deployment backend URL if hosted separately, 
