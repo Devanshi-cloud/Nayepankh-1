@@ -246,7 +246,10 @@ export default function CampaignsSection() {
         setCampaigns(data.campaigns);
       } catch (err) {
         clearTimeout(timeout);
-        setError(err.message);
+        // Ignore AbortError from cleanup - it's expected
+        if (err.name !== 'AbortError') {
+          setError(err.message);
+        }
       } finally {
         setIsLoading(false);
       }

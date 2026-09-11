@@ -1,0 +1,22 @@
+{
+  "name": "nayepankh-blog-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "sanity dev",
+    "start": "sanity start",
+    "build": "sanity build",
+    "deploy": "sanity deploy"
+  },
+  "dependencies": {
+    "@sanity/image-url": "^3.0.0",
+    "@sanity/vision": "^3.0.0",
+    "@portabletext/react": "^3.0.0",
+    "sanity": "^3.0.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

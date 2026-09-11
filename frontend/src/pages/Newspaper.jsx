@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -8,13 +8,11 @@ import {
   CardMedia,
   CardContent,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import newspaperBg from "../assets/media-coverage.avif"; // Background for hero section
-import article1 from "../assets/image.png"; // Replace with your newspaper clippings
-import article2 from "../assets/image1.png";
-import article3 from "../assets/image2.png";
-import article4 from "../assets/image3.png";
+import { sanityClient, urlFor } from "../lib/sanityClient";
 
 // Theme matching your site
 const theme = createTheme({
@@ -40,34 +38,31 @@ const theme = createTheme({
   },
 });
 
-const articles = [
-  {
-    title: "NayePankh’s COVID Relief Efforts Shine",
-    image: article1,
-    excerpt: "During the pandemic, NayePankh stepped up to provide essential supplies to the underprivileged.",
-    date: "April 15, 2021",
-  },
-  {
-    title: "Youth-Led NGO Expands Reach",
-    image: article2,
-    excerpt: "From a small group to a statewide force, NayePankh’s growth story inspires.",
-    date: "July 22, 2021",
-  },
-  {
-    title: "Menstrual Hygiene Campaign Gains Traction",
-    image: article3,
-    excerpt: "NayePankh’s efforts to educate and support women make headlines.",
-    date: "March 8, 2022",
-  },
-  {
-    title: "Feeding Hope: NayePankh’s Hunger Initiative",
-    image: article4,
-    excerpt: "Distributing food to communities and strays, NayePankh shows loyalty to all.",
-    date: "November 10, 2022",
-  },
-];
+// GROQ query to fetch published articles from Sanity
+const articlesQuery = `*[_type == "article" && defined(publishedAt)] | order(publishedAt desc) [0...4] {
+  title,
+  excerpt,
+  "date": formatDate(publishedAt, "DD MMMM, YYYY"),
+  "image": coverImage,
+}`;
 
 function Newspaper() {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    sanityClient
+      .fetch(articlesQuery)
+      .then((data) => {
+        setArticles(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch articles:", error);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -157,109 +152,124 @@ function Newspaper() {
               Our Journey in Print
             </Typography>
             <Grid container spacing={4} justifyContent="center">
-              {articles.map((article, index) => (
-                <Grid item xs={12} sm={6} md={3} key={index}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      boxShadow: "0px 6px 20px rgba(0,0,0,0.15)",
-                      transition: "transform 0.5s ease, box-shadow 0.5s ease",
-                      "&:hover": {
-                        transform: "translateY(-10px) scale(1.03)",
-                        boxShadow: "0px 12px 30px rgba(0,0,0,0.25)",
-                      },
-                      bgcolor: "#FFFFFF",
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      image={article.image}
-                      alt={article.title}
+              {loading ? (
+                <Grid item xs={12} sx={{ textAlign: "center", py: 8 }}>
+                  <CircularProgress sx={{ color: "primary.main" }} />
+                  <Typography variant="body1" sx={{ mt: 2, color: "text.secondary" }}>
+                    Loading articles...
+                  </Typography>
+                </Grid>
+              ) : articles.length === 0 ? (
+                <Grid item xs={12} sx={{ textAlign: "center", py: 8 }}>
+                  <Typography variant="h6" sx={{ color: "text.secondary" }}>
+                    No articles yet. Check back soon!
+                  </Typography>
+                </Grid>
+              ) : (
+                articles.map((article, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <Card
                       sx={{
-                        height: { xs: 160, sm: 200, md: 220 },
-                        objectFit: "cover",
-                        transition: "transform 0.5s ease",
-                        "&:hover": {
-                          transform: "scale(1.05)", // Zoom effect
-                        },
-                      }}
-                    />
-                    <CardContent
-                      sx={{
-                        flexGrow: 1,
+                        height: "100%",
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between",
-                        py: { xs: 2, md: 3 },
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        boxShadow: "0px 6px 20px rgba(0,0,0,0.15)",
+                        transition: "transform 0.5s ease, box-shadow 0.5s ease",
+                        "&:hover": {
+                          transform: "translateY(-10px) scale(1.03)",
+                          boxShadow: "0px 12px 30px rgba(0,0,0,0.25)",
+                        },
+                        bgcolor: "#FFFFFF",
                       }}
                     >
-                      <Box>
-                        <Typography
-                          variant="h6"
-                          component="h3"
-                          sx={{
-                            color: "primary.main",
-                            fontWeight: 700,
-                            fontSize: { xs: "1.1rem", md: "1.25rem" },
-                            mb: 1,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {article.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "text.primary",
-                            fontSize: { xs: "0.85rem", md: "1rem" },
-                            mb: 2,
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          {article.excerpt}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "secondary.main",
-                            fontWeight: 600,
-                            fontSize: { xs: "0.75rem", md: "0.9rem" },
-                          }}
-                        >
-                          {article.date}
-                        </Typography>
-                        <Button
-                          variant="outlined"
-                          sx={{
-                            mt: 2,
-                            color: "primary.main",
-                            borderColor: "primary.main",
-                            borderRadius: 50,
-                            px: 3,
-                            py: 0.5,
-                            fontWeight: 600,
-                            transition: "all 0.3s ease",
-                            "&:hover": {
-                              bgcolor: "primary.main",
-                              color: "#FFFFFF",
+                      <CardMedia
+                        component="img"
+                        image={article.image ? urlFor(article.image).width(400).height(300).url() : ""}
+                        alt={article.title}
+                        sx={{
+                          height: { xs: 160, sm: 200, md: 220 },
+                          objectFit: "cover",
+                          transition: "transform 0.5s ease",
+                          "&:hover": {
+                            transform: "scale(1.05)", // Zoom effect
+                          },
+                        }}
+                      />
+                      <CardContent
+                        sx={{
+                          flexGrow: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          py: { xs: 2, md: 3 },
+                        }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="h6"
+                            component="h3"
+                            sx={{
+                              color: "primary.main",
+                              fontWeight: 700,
+                              fontSize: { xs: "1.1rem", md: "1.25rem" },
+                              mb: 1,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {article.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "text.primary",
+                              fontSize: { xs: "0.85rem", md: "1rem" },
+                              mb: 2,
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {article.excerpt}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "secondary.main",
+                              fontWeight: 600,
+                              fontSize: { xs: "0.75rem", md: "0.9rem" },
+                            }}
+                          >
+                            {article.date}
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            sx={{
+                              mt: 2,
+                              color: "primary.main",
                               borderColor: "primary.main",
-                              transform: "scale(1.05)",
-                            },
-                          }}
-                        >
-                          Read More
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                              borderRadius: 50,
+                              px: 3,
+                              py: 0.5,
+                              fontWeight: 600,
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                bgcolor: "primary.main",
+                                color: "#FFFFFF",
+                                borderColor: "primary.main",
+                                transform: "scale(1.05)",
+                              },
+                            }}
+                          >
+                            Read More
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))
+              )}
             </Grid>
           </Container>
         </Box>

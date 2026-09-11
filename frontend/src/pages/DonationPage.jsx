@@ -57,6 +57,11 @@ const SUBSCRIPTION_PLANS = [
 function Donation() {
   const [searchParams] = useSearchParams();
   const initialReferralCode = searchParams.get("ref") || "";
+
+  // Auto-open dialog on page load
+  useEffect(() => {
+    setOpenDialog(true);
+  }, []);
   const [timedCampaigns, setTimedCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
