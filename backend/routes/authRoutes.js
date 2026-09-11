@@ -137,9 +137,7 @@ router.post("/signup", async (req, res) => {
     const roleStr = role || 'Intern';
 
     if (roleStr === 'Intern') {
-      const otp = generateOTP();
-      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
+      // Auto-verify Interns on signup - no OTP required
       const { data: newUser, error: insertError } = await supabase
         .from("users")
         .insert({
@@ -149,9 +147,7 @@ router.post("/signup", async (req, res) => {
           password_hash: passwordHash,
           referral_code: referralCode,
           role: roleStr,
-          email_verified: false,
-          otp,
-          otp_expiry: otpExpiry
+          email_verified: true
         })
         .select()
         .single();
@@ -169,14 +165,10 @@ router.post("/signup", async (req, res) => {
           goal_amount: 30000.00
         });
 
-      const emailSent = await sendOTP(email, otp);
-      if (!emailSent) {
-        return res.status(201).json({
-          msg: 'Account created. OTP could not be delivered automatically, but your account is ready for manual verification.',
-          email,
-        });
-      }
-      return res.status(201).json({ msg: 'OTP sent to email. Please verify to complete registration.', email });
+      // Still send welcome email (optional)
+      const emailSent = await sendOTP(email, generateOTP());
+      
+      return res.status(201).json({ token: null, user: { id: newUser.id, firstname, lastname, email, referralCode } });
     } else {
       const { data: newUser, error: insertError } = await supabase
         .from("users")
@@ -265,11 +257,8 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(400).json({ msg: "Invalid Credentials" });
 
-    if (user.role === 'Intern') {
-      if (!user.email_verified) return res.status(400).json({ msg: 'Please verify your registration OTP first.' });
-    }
-    
     // All users (Intern, Admin, Super Admin) log in directly with email/password
+    // Email verification is optional - users can access dashboard immediately
     const payload = { id: user.id, role: user.role };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
     return res.json({ 
