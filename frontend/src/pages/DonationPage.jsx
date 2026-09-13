@@ -44,14 +44,14 @@ const theme = createTheme({
     h3: { fontWeight: 700 },
     body1: { fontWeight: 400 },
   },
-});
-
-// Default subscription plan amounts (in INR per month)
+});  // Default subscription plan amounts (in INR per month)
 const SUBSCRIPTION_PLANS = [
   { label: "Starter", amount: 250, badge: "🌱" },
+  { label: "Basic", amount: 100, badge: "📄" },
+  { label: "Mini", amount: 150, badge: "🪙" },
   { label: "Supporter", amount: 500, badge: "🤝" },
+  { label: "Guardian", amount: 4999, badge: "🛡️" },
   { label: "Champion", amount: 1000, badge: "🏆" },
-  { label: "Guardian", amount: 2500, badge: "🛡️" },
 ];
 
 function Donation() {
@@ -175,7 +175,7 @@ function Donation() {
     if (newMode !== null) {
       setIsSubscription(newMode === "subscription");
       if (newMode === "subscription" && !selectedSubPlan) {
-        setSelectedSubPlan(SUBSCRIPTION_PLANS[1]); // Default to "Supporter"
+        setSelectedSubPlan(SUBSCRIPTION_PLANS[3]); // Default to "Supporter"
         setFormData((prev) => ({ ...prev, subscriptionAmount: "500" }));
       }
     }
@@ -857,7 +857,7 @@ function Donation() {
               </Typography>
               <Button
                 variant="contained"
-                href="https://pages.razorpay.com/pl_NUcVhpQzK8rI1b/view"
+                href="https://rzp.io/rzp/0PN3nW7H"
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={{
