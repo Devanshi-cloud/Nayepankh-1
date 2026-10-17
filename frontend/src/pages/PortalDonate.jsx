@@ -223,7 +223,7 @@ const Donate = () => {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_API_KEY || "rzp_test_TBNBuPaPRaIZWu",
+        key: import.meta.env.VITE_RAZORPAY_API_KEY || "rzp_live_TIzwcexs90s5mL",
         amount: orderData.amount,
         currency: "INR",
         name: "NayePankh",

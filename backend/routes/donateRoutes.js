@@ -13,7 +13,7 @@ const razorpay = new Razorpay({
 router.get("/public", async (req, res) => {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const { data: campaigns, error } = await supabase
+    let { data: campaigns, error } = await supabase
       .from("campaigns")
       .select("*")
       .gte("end_date", today)
@@ -21,8 +21,13 @@ router.get("/public", async (req, res) => {
 
     if (error) throw error;
 
+    // Graceful fallback to all campaigns if none marked as currently active
     if (!campaigns || !campaigns.length) {
-      return res.status(404).json({ msg: "No active campaigns found" });
+      const { data: allCampaigns } = await supabase
+        .from("campaigns")
+        .select("*")
+        .order("start_date", { ascending: false });
+      campaigns = allCampaigns || [];
     }
 
     const formattedCampaigns = campaigns.map(camp => ({
@@ -62,7 +67,7 @@ router.get("/:referralCode", async (req, res) => {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    const { data: campaigns, error } = await supabase
+    let { data: campaigns, error } = await supabase
       .from("campaigns")
       .select("*")
       .gte("end_date", today)
@@ -70,8 +75,13 @@ router.get("/:referralCode", async (req, res) => {
 
     if (error) throw error;
 
+    // Graceful fallback to all campaigns if none marked as currently active
     if (!campaigns || !campaigns.length) {
-      return res.status(404).json({ msg: "No active campaigns found" });
+      const { data: allCampaigns } = await supabase
+        .from("campaigns")
+        .select("*")
+        .order("start_date", { ascending: false });
+      campaigns = allCampaigns || [];
     }
 
     const formattedCampaigns = campaigns.map(camp => ({
@@ -268,8 +278,8 @@ router.post("/create-subscription", async (req, res) => {
       }
     }
 
-    // Use provided planId, fall back to env, then use dummy
-    const effectivePlanId = planId || process.env.RAZORPAY_PLAN_ID || "plan_Qwerty12345";
+    // Use provided planId, fall back to env, then use valid live Starter plan
+    const effectivePlanId = planId || process.env.RAZORPAY_PLAN_ID || "plan_StMK4EwoNKimwM";
 
     // Create subscription in Razorpay
     const subscription = await razorpay.subscriptions.create({

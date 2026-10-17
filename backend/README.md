@@ -6,8 +6,7 @@ This document provides a detailed explanation of the authentication, user, campa
 
 ## Base URL
 
-- **Development:** `https://naye-pankh-intern-portal-ox93.vercel.app`
-- **Production:** (your deployed backend URL)
+- **Production / Deployed Backend:** `https://nayepankh-1.vercel.app`
 
 All endpoints are prefixed with `/api`.
 
@@ -17,8 +16,7 @@ All endpoints are prefixed with `/api`.
 
 ## Base URL
 
-- **Development:** `https://naye-pankh-intern-portal-ox93.vercel.app`
-- **Production:** (your deployed backend URL)
+- **Production / Deployed Backend:** `https://nayepankh-1.vercel.app`
 
 All endpoints are prefixed with `/api/auth`.
 

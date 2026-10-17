@@ -9,16 +9,26 @@ const allowedOrigins = [
   'https://naye-pankh-intern-portal.vercel.app',  // Main frontend
   'https://naye-pankh-intern-portal-ox93.vercel.app',  // Preview/backend
   'https://naye-pankh-portal.vercel.app',  // New frontend deployment
-  'http://localhost:3000',  // Local dev
-  'http://localhost:5173'   // Integrated local dev (Vite)
+  'https://nayepankh-1.vercel.app',        // Backend and current deployment
+  'http://localhost:3000',                 // Local dev
+  'http://localhost:5001',                 // Local dev backend
+  'http://localhost:5173'                  // Integrated local dev (Vite)
 ];
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  // Match any Vercel deployment domain (production, preview, staging)
+  if (/^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(origin)) return true;
+  return false;
+};
 
 // Global CORS pre-handler (runs before any middleware, handles all methods/paths)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
   // Set CORS headers for all responses
-  if (allowedOrigins.includes(origin) || !origin) {
+  if (isOriginAllowed(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   } else {
@@ -55,7 +65,7 @@ app.use("/api/campaign", require("./routes/campaignRoutes"));
 // Error handling middleware (ensure CORS headers on errors)
 app.use((err, req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || !origin) {
+  if (isOriginAllowed(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }

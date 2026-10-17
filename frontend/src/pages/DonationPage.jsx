@@ -54,6 +54,17 @@ const SUBSCRIPTION_PLANS = [
   { label: "Champion", amount: 1000, badge: "🏆" },
 ];
 
+const LIVE_PLAN_FALLBACKS = {
+  Mini: "plan_StMJXJ0uYZDETy",
+  Basic: "plan_SrX1rfv8LKwrTD",
+  Starter: "plan_StMK4EwoNKimwM",
+  Supporter: "plan_SrX2M4MXOSdPQY",
+  Champion: "plan_StMA9NHyegoeZN",
+  Guardian: "plan_StMLEMyK8SzXQb",
+};
+
+const DEFAULT_RAZORPAY_KEY = "rzp_live_TIzwcexs90s5mL";
+
 function Donation() {
   const [searchParams] = useSearchParams();
   const initialReferralCode = searchParams.get("ref") || "";
@@ -210,7 +221,7 @@ function Donation() {
 
     return new Promise((resolve, reject) => {
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_API_KEY || "rzp_test_TBNBuPaPRaIZWu",
+        key: import.meta.env.VITE_RAZORPAY_API_KEY || DEFAULT_RAZORPAY_KEY,
         amount: orderData.amount,
         currency: "INR",
         name: "NayePankh",
@@ -264,6 +275,11 @@ function Donation() {
     // For subscriptions, we use a plan-based approach.
     // The PLAN_ID needs to be set up in Razorpay dashboard.
     // We create a subscription and then open the Razorpay checkout.
+    const chosenPlanId =
+      import.meta.env[`VITE_RAZORPAY_PLAN_ID_${selectedSubPlan?.label}`] ||
+      LIVE_PLAN_FALLBACKS[selectedSubPlan?.label] ||
+      LIVE_PLAN_FALLBACKS.Starter;
+
     const response = await fetch(buildApiUrl("/api/donate/create-subscription"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -273,7 +289,7 @@ function Donation() {
         phoneNumber: formData.phoneNumber,
         campaignId: selectedCampaign?._id || null,
         referralCode: formData.referralCode || null,
-        planId: import.meta.env[`VITE_RAZORPAY_PLAN_ID_${selectedSubPlan?.label}`] || import.meta.env.VITE_RAZORPAY_PLAN_ID_Starter || "plan_Qwerty12345",
+        planId: chosenPlanId,
         totalCount: 12,
       }),
     });
@@ -285,7 +301,7 @@ function Donation() {
 
     return new Promise((resolve, reject) => {
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_API_KEY || "rzp_test_TBNBuPaPRaIZWu",
+        key: import.meta.env.VITE_RAZORPAY_API_KEY || DEFAULT_RAZORPAY_KEY,
         name: "NayePankh",
         description: `Monthly Subscription - ${selectedCampaign?.title || "NayePankh Foundation"}`,
         subscription_id: subData.subscriptionId,
