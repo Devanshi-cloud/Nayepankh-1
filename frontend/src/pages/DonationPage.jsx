@@ -266,6 +266,14 @@ function Donation() {
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (failResponse) {
+        console.error("Razorpay Payment Failed:", failResponse.error);
+        const reason =
+          failResponse.error?.description ||
+          failResponse.error?.reason ||
+          "Payment blocked or declined by Razorpay/bank.";
+        reject(new Error(reason));
+      });
       rzp.open();
     });
   };
@@ -323,6 +331,14 @@ function Donation() {
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (failResponse) {
+        console.error("Razorpay Subscription Payment Failed:", failResponse.error);
+        const reason =
+          failResponse.error?.description ||
+          failResponse.error?.reason ||
+          "Subscription payment blocked or declined by Razorpay/bank.";
+        reject(new Error(reason));
+      });
       rzp.open();
     });
   };

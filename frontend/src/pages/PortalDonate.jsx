@@ -277,6 +277,14 @@ const Donate = () => {
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (failResponse) {
+        console.error("Razorpay Payment Failed:", failResponse.error);
+        const reason =
+          failResponse.error?.description ||
+          failResponse.error?.reason ||
+          "Payment blocked or declined by Razorpay/bank.";
+        setErrors({ general: reason });
+      });
       rzp.open();
     } catch (err) {
       setErrors({ general: "Failed to process donation. Please ensure the server is running and online." });
