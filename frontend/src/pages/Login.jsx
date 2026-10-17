@@ -81,7 +81,11 @@ const Login = () => {
       const data = await response.json();
       
       if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
+        try {
+          localStorage.setItem("token", data.token);
+        } catch (storageErr) {
+          console.warn("Storage access not allowed:", storageErr);
+        }
         let role = data.user?.role;
         if (!role) {
           try {

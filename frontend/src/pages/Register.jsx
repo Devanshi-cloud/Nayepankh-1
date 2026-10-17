@@ -133,13 +133,28 @@ const Register = () => {
         setStep(2);
         toast.info("OTP sent to your email. Please verify.");
         setLoading(false);
-      } else if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        toast.success("Registration successful!");
+      } else if (response.ok && (data.token || data.user)) {
+        if (data.token) {
+          try {
+            localStorage.setItem("token", data.token);
+          } catch (storageErr) {
+            console.warn("Storage access not allowed:", storageErr);
+          }
+        }
+        toast.success(data.msg || "Registration successful!");
         setLoading(false);
-        window.location.href = "/dashboard";
+        setTimeout(() => {
+          window.location.href = data.token ? "/dashboard" : "/login";
+        }, 1000);
       } else {
-        toast.error(data.msg || "Registration failed");
+        if (data.msg === "User already exists") {
+          toast.info("This email is already registered. Redirecting to login...");
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1500);
+        } else {
+          toast.error(data.msg || (data.missing ? `Missing required fields: ${data.missing.join(", ")}` : "Registration failed"));
+        }
         setLoading(false);
       }
     } catch (error) {

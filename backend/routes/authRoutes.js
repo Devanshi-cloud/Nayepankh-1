@@ -165,10 +165,17 @@ router.post("/signup", async (req, res) => {
           goal_amount: 30000.00
         });
 
-      // Still send welcome email (optional)
-      const emailSent = await sendOTP(email, generateOTP());
+      // Send welcome email (non-blocking)
+      sendOTP(email, generateOTP()).catch(err => console.warn("Welcome email notice:", err.message));
       
-      return res.status(201).json({ token: null, user: { id: newUser.id, firstname, lastname, email, referralCode } });
+      const payload = { id: newUser.id, role: newUser.role };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+      return res.status(201).json({ 
+        token, 
+        msg: "Registration successful", 
+        user: { id: newUser.id, firstname, lastname, email, referralCode } 
+      });
     } else {
       const { data: newUser, error: insertError } = await supabase
         .from("users")
