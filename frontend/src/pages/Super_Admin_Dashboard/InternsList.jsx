@@ -26,6 +26,7 @@ import {
   InputLabel,
   FormControl,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../../portalTheme";
@@ -85,7 +86,7 @@ const InternsList = () => {
             internList.map(async (intern) => {
               try {
                 const donationsResponse = await fetch(
-                  buildApiUrl("/api/donations/by-referral/${intern.referralCode}"),
+                  buildApiUrl(`/api/donations/by-referral/${intern.referralCode}`),
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -210,7 +211,7 @@ const InternsList = () => {
     }
     try {
       const response = await fetch(
-        buildApiUrl("/api/users/${selectedIntern._id}"),
+        buildApiUrl(`/api/users/${selectedIntern._id}`),
         {
           method: "PUT",
           headers: {
@@ -262,7 +263,7 @@ const InternsList = () => {
     }
     try {
       const response = await fetch(
-        buildApiUrl("/api/users/${selectedIntern._id}"),
+        buildApiUrl(`/api/users/${selectedIntern._id}`),
         {
           method: "DELETE",
           headers: {
@@ -491,7 +492,7 @@ const InternsList = () => {
                                   setSelectedInternName(`${intern.firstname} ${intern.lastname}`);
                                   try {
                                     const donationsResponse = await fetch(
-                                      buildApiUrl("/api/donations/by-referral/${intern.referralCode}"),
+                                      buildApiUrl(`/api/donations/by-referral/${intern.referralCode}`),
                                       {
                                         headers: {
                                           Authorization: `Bearer ${token}`,
@@ -957,6 +958,7 @@ const InternsList = () => {
                       <TableCell sx={{ color: 'white', fontWeight: 600, py: 1.5 }}>Donor Name</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 600, py: 1.5 }}>Email</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 600, py: 1.5 }}>Amount</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 600, py: 1.5 }}>Status</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 600, py: 1.5 }}>Date</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 600, py: 1.5 }}>Campaign Title</TableCell>
                     </TableRow>
@@ -975,6 +977,14 @@ const InternsList = () => {
                         <TableCell sx={{ py: 1.2 }}>{donation.donorName || (donation.donor ? `${donation.donor.firstname} ${donation.donor.lastname}` : "-")}</TableCell>
                         <TableCell sx={{ py: 1.2 }}>{donation.email || "-"}</TableCell>
                         <TableCell sx={{ fontWeight: 600, color: 'primary.main', py: 1.2 }}>₹{donation.amount?.toLocaleString() || 0}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>
+                          <Chip
+                            size="small"
+                            label={donation.paymentStatus || "completed"}
+                            color={donation.paymentStatus === "completed" ? "success" : "warning"}
+                            sx={{ fontWeight: 600, textTransform: "capitalize" }}
+                          />
+                        </TableCell>
                         <TableCell sx={{ py: 1.2 }}>{donation.date ? new Date(donation.date).toLocaleDateString() : "-"}</TableCell>
                         <TableCell sx={{ py: 1.2 }}>{donation.campaign?.title || donation.campaignDetails?.title || "-"}</TableCell>
                       </TableRow>

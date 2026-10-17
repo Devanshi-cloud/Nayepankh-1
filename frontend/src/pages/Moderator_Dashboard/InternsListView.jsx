@@ -57,7 +57,7 @@ const InternsListView = () => {
             internList.map(async (intern) => {
               try {
                 const donationsResponse = await fetch(
-                  buildApiUrl("/api/donations/by-referral/${intern.referralCode}"),
+                  buildApiUrl(`/api/donations/by-referral/${intern.referralCode}`),
                   {
                     headers: { Authorization: `Bearer ${token}` },
                   }
